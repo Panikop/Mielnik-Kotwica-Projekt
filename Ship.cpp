@@ -36,7 +36,7 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition, state activeState)
     sf::Vector2f right(-direction.y, direction.x);
 
 
-    //KIERUNEK I MNO¯NIK
+    //KIERUNEK I MNOÅ»NIK
     movementMultiplier = Ship::calculateMovementMultiplier();
     sf::Vector2f movement(0, 0);
     if(activeState == state::STATEK)
@@ -158,4 +158,14 @@ void Ship::collisionMove(float x, float y, float multiplier)
     Ship::sprite.move(x,y);
     velocity.x = x*multiplier;
     velocity.y = y*multiplier;
+}
+
+float Ship::getMaxStorage()
+{
+    return Ship::max_storage;
+}
+
+float Ship::getCurrentStorage()
+{
+    return Ship::current_storage;
 }

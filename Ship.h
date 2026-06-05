@@ -27,6 +27,9 @@ private:
     float nitroRechargeRate = 1;
     bool nitroOnCooldown = false;
 
+    float max_storage = 100;
+    float current_storage = 50;
+
     float shipSpeed = 200;
     float movementMultiplier = 1;
 
@@ -51,6 +54,9 @@ public:
     float getMaxNitro();
     float getCurrentNitro();
     bool getNitroOnCooldown();
+
+    float getMaxStorage();
+    float getCurrentStorage();
 
     void collisionMove(float x, float y, float multiplier);
 };

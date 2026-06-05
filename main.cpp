@@ -30,7 +30,7 @@ int main(){
     sf::Clock clock;
 
     sf::Texture space_background;
-    space_background.loadFromFile("kosmos_tlo.png");
+    space_background.loadFromFile("src/kosmos_tlo.png");
     space_background.setRepeated(true);
 
     sf::RectangleShape background(rozdzielczosc);
@@ -69,6 +69,22 @@ int main(){
     nitrobar.setOrigin(0, 36);
     nitrobar.setPosition(rozdzielczosc.x - 6 - 228, rozdzielczosc.y - 6-48);
     nitrobar.setFillColor(sf::Color::Cyan);
+
+
+
+    /////////////////////////////////////////
+
+    sf::RectangleShape storagebarbackground(sf::Vector2f(228,36));
+    storagebarbackground.setOrigin(228,36);
+    storagebarbackground.setPosition(rozdzielczosc.x-6,rozdzielczosc.y-6-96);
+    storagebarbackground.setFillColor(sf::Color::White);
+    storagebarbackground.setOutlineThickness(6);
+    storagebarbackground.setOutlineColor(sf::Color::Black);
+
+    sf::RectangleShape storagebar(sf::Vector2f(228,36));
+    storagebar.setOrigin(0, 36);
+    storagebar.setPosition(rozdzielczosc.x - 6 - 228, rozdzielczosc.y - 6-96);
+    storagebar.setFillColor(sf::Color(218, 165, 32)); // Goldenrod color for metal scraps
 
 
 
@@ -118,6 +134,28 @@ int main(){
     playerShip.createShip();
     state activeState = state::STATEK;
     bool space_clicked;
+    bool mapMode = false;
+
+    sf::Font font;
+    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+        cout << "BĹ‚Ä…d Ĺ‚adowania czcionki arial.ttf" << endl;
+    }
+
+    sf::Text mapText;
+    mapText.setFont(font);
+    mapText.setString("MAP");
+    mapText.setCharacterSize(50);
+    mapText.setFillColor(sf::Color::White);
+    mapText.setStyle(sf::Text::Bold);
+    sf::FloatRect textRect = mapText.getLocalBounds();
+    mapText.setOrigin(textRect.left + textRect.width / 2.0f, textRect.top + textRect.height / 2.0f);
+    mapText.setPosition(sf::Vector2f(rozdzielczosc.x / 2.0f, rozdzielczosc.y * 0.07f));
+
+    sf::RectangleShape mapBorder(sf::Vector2f(rozdzielczosc.x * 0.8f, rozdzielczosc.y * 0.8f));
+    mapBorder.setPosition(rozdzielczosc.x * 0.1f, rozdzielczosc.y * 0.15f);
+    mapBorder.setFillColor(sf::Color::Transparent);
+    mapBorder.setOutlineColor(sf::Color::White);
+    mapBorder.setOutlineThickness(3.0f);
 
     player playerCharacter;
     playerCharacter.createPlayer();
@@ -133,13 +171,16 @@ int main(){
         mousePosition = sf::Mouse::getPosition(window);
         mouseWorldPosition = window.mapPixelToCoords(mousePosition);
 
-        playerShip.update(dt,mouseWorldPosition,activeState);
+        playerShip.update(dt,mouseWorldPosition,mapMode ? state::ANIMACJA : activeState);
 
         sf::Vector2f cameraCenter = camera.getCenter();
         background.setPosition(cameraCenter);
 
+        sf::Vector2f currentViewSize = camera.getSize();
+        background.setSize(currentViewSize);
+        background.setOrigin(currentViewSize.x / 2.f, currentViewSize.y / 2.f);
 
-        sf::IntRect background_slice((int)(cameraCenter.x - rozdzielczosc.x/2),(int)(cameraCenter.y - rozdzielczosc.y/2),rozdzielczosc.x,rozdzielczosc.y);
+        sf::IntRect background_slice((int)(cameraCenter.x - currentViewSize.x/2),(int)(cameraCenter.y - currentViewSize.y/2),currentViewSize.x,currentViewSize.y);
         background.setTextureRect(background_slice);
 
 
@@ -152,9 +193,26 @@ int main(){
             {
                 if(event.key.code == sf::Keyboard::Space)
                 {
-                    cout << "klikniety" << endl;
-                    space_clicked = true;
-                    activeState = state::LUDZIK;
+                    if (!mapMode)
+                    {
+                        cout << "klikniety" << endl;
+                        space_clicked = true;
+                        activeState = state::LUDZIK;
+                    }
+                }
+                if(event.key.code == sf::Keyboard::M)
+                {
+                    mapMode = !mapMode;
+                    if (mapMode)
+                    {
+                        camera.setSize(rozdzielczosc * 3.f);
+                        camera.setViewport(sf::FloatRect(0.1f, 0.15f, 0.8f, 0.8f));
+                    }
+                    else
+                    {
+                        camera.setSize(rozdzielczosc);
+                        camera.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f));
+                    }
                 }
             }
         }
@@ -180,6 +238,14 @@ int main(){
                 nitrobar.setFillColor(sf::Color::Cyan);
             }
             nitrobar.setScale(sf::Vector2f((nitro/max_nitro),1));
+        }
+
+        float storage = playerShip.getCurrentStorage();
+        float max_storage = playerShip.getMaxStorage();
+
+        if (max_storage > 0 && storage/max_storage >= 0)
+        {
+            storagebar.setScale(sf::Vector2f((storage/max_storage),1));
         }
 
 
@@ -277,12 +343,22 @@ int main(){
 
             window.setView(window.getDefaultView());
 
+            if (mapMode)
+            {
+                window.draw(mapBorder);
+                window.draw(mapText);
+            }
+            else
+            {
+                window.draw(healtbarbackgroud);
+                window.draw(healthbar);
 
-            window.draw(healtbarbackgroud);
-            window.draw(healthbar);
+                window.draw(nitrobarbackground);
+                window.draw(nitrobar);
 
-            window.draw(nitrobarbackground);
-            window.draw(nitrobar);
+                window.draw(storagebarbackground);
+                window.draw(storagebar);
+            }
         }
 
         else if(activeState==state::LUDZIK)
