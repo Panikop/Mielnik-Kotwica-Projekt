@@ -33,6 +33,11 @@ private:
     float shipSpeed = 200;
     float movementMultiplier = 1;
 
+    int healthUpgradeLevel = 0;
+    int nitroUpgradeLevel = 0;
+    int storageUpgradeLevel = 0;
+    int speedUpgradeLevel = 0;
+
     sf::Vector2f velocity;
 
 
@@ -59,4 +64,21 @@ public:
     float getCurrentStorage();
 
     void collisionMove(float x, float y, float multiplier);
+
+    int getHealthUpgradeLevel() const;
+    int getNitroUpgradeLevel() const;
+    int getStorageUpgradeLevel() const;
+    int getSpeedUpgradeLevel() const;
+
+    float getHealthUpgradeCost() const;
+    float getNitroUpgradeCost() const;
+    float getStorageUpgradeCost() const;
+    float getSpeedUpgradeCost() const;
+
+    float getShipSpeed() const;
+
+    bool upgradeMaxHealth();
+    bool upgradeMaxNitro();
+    bool upgradeMaxStorage();
+    bool upgradeShipSpeed();
 };

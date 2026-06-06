@@ -169,3 +169,61 @@ float Ship::getCurrentStorage()
 {
     return Ship::current_storage;
 }
+
+int Ship::getHealthUpgradeLevel() const { return healthUpgradeLevel; }
+int Ship::getNitroUpgradeLevel() const { return nitroUpgradeLevel; }
+int Ship::getStorageUpgradeLevel() const { return storageUpgradeLevel; }
+int Ship::getSpeedUpgradeLevel() const { return speedUpgradeLevel; }
+
+float Ship::getHealthUpgradeCost() const { return 20.f + healthUpgradeLevel * 15.f; }
+float Ship::getNitroUpgradeCost() const { return 25.f + nitroUpgradeLevel * 15.f; }
+float Ship::getStorageUpgradeCost() const { return 30.f + storageUpgradeLevel * 20.f; }
+float Ship::getSpeedUpgradeCost() const { return 40.f + speedUpgradeLevel * 25.f; }
+
+float Ship::getShipSpeed() const { return shipSpeed; }
+
+bool Ship::upgradeMaxHealth() {
+    float cost = getHealthUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        healthUpgradeLevel++;
+        max_health += 25.f;
+        current_health += 25.f;
+        return true;
+    }
+    return false;
+}
+
+bool Ship::upgradeMaxNitro() {
+    float cost = getNitroUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        nitroUpgradeLevel++;
+        max_nitro += 15.f;
+        current_nitro += 15.f;
+        return true;
+    }
+    return false;
+}
+
+bool Ship::upgradeMaxStorage() {
+    float cost = getStorageUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        storageUpgradeLevel++;
+        max_storage += 50.f;
+        return true;
+    }
+    return false;
+}
+
+bool Ship::upgradeShipSpeed() {
+    float cost = getSpeedUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        speedUpgradeLevel++;
+        shipSpeed += 30.f;
+        return true;
+    }
+    return false;
+}

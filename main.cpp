@@ -5,6 +5,7 @@
 
 #include "Ship.h"
 #include "player.h"
+#include "UIBar.h"
 
 #define _USE_MATH_DEFINES
 
@@ -38,57 +39,43 @@ int main(){
     background.setTexture(&space_background);
 
 
-    ///////////////////////////////////
+    sf::Font font;
+    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+        cout << "Blad ladowania czcionki arial.ttf" << endl;
+    }
 
-    sf::RectangleShape healtbarbackgroud(sf::Vector2f(228,36));
-    healtbarbackgroud.setOrigin(228,36);
-    healtbarbackgroud.setPosition(rozdzielczosc.x-6,rozdzielczosc.y-6);
-    healtbarbackgroud.setFillColor(sf::Color::White);
-    healtbarbackgroud.setOutlineThickness(6);
-    healtbarbackgroud.setOutlineColor(sf::Color::Black);
+    // Nowoczesna stylizacja i układ pasków
+    sf::Vector2f barSize(230.f, 28.f);
+    float marginX = 12.f;
+    float marginY = 12.f;
+    float spacingY = 38.f;
 
+    UIBar healthBar(
+        sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY),
+        barSize,
+        sf::Color(220, 50, 50), // Karmazynowa czerwień
+        "HP",
+        font
+    );
 
-    sf::RectangleShape healthbar(sf::Vector2f(228,36));
-    healthbar.setOrigin(0, 36);
-    healthbar.setPosition(rozdzielczosc.x - 6 - 228, rozdzielczosc.y - 6);
-    healthbar.setFillColor(sf::Color::Red);
+    UIBar nitroBar(
+        sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - spacingY),
+        barSize,
+        sf::Color(0, 190, 220), // Neonowy błękit
+        "NITRO",
+        font
+    );
 
+    UIBar storageBar(
+        sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - 2.f * spacingY),
+        barSize,
+        sf::Color(220, 160, 30), // Złocisty/Brązowy
+        "CARGO",
+        font
+    );
 
-    /////////////////////////////////////////
-
-
-
-    sf::RectangleShape nitrobarbackground(sf::Vector2f(228,36));
-    nitrobarbackground.setOrigin(228,36);
-    nitrobarbackground.setPosition(rozdzielczosc.x-6,rozdzielczosc.y-6-48);
-    nitrobarbackground.setFillColor(sf::Color::White);
-    nitrobarbackground.setOutlineThickness(6);
-    nitrobarbackground.setOutlineColor(sf::Color::Black);
-
-    sf::RectangleShape nitrobar(sf::Vector2f(228,36));
-    nitrobar.setOrigin(0, 36);
-    nitrobar.setPosition(rozdzielczosc.x - 6 - 228, rozdzielczosc.y - 6-48);
-    nitrobar.setFillColor(sf::Color::Cyan);
-
-
-
-    /////////////////////////////////////////
-
-    sf::RectangleShape storagebarbackground(sf::Vector2f(228,36));
-    storagebarbackground.setOrigin(228,36);
-    storagebarbackground.setPosition(rozdzielczosc.x-6,rozdzielczosc.y-6-96);
-    storagebarbackground.setFillColor(sf::Color::White);
-    storagebarbackground.setOutlineThickness(6);
-    storagebarbackground.setOutlineColor(sf::Color::Black);
-
-    sf::RectangleShape storagebar(sf::Vector2f(228,36));
-    storagebar.setOrigin(0, 36);
-    storagebar.setPosition(rozdzielczosc.x - 6 - 228, rozdzielczosc.y - 6-96);
-    storagebar.setFillColor(sf::Color(218, 165, 32)); // Goldenrod color for metal scraps
-
-
-
-    /////////////////////////////////////////
+    bool upgradeMode = false;
+    UIUpgradeMenu upgradeMenu(rozdzielczosc, font);
 
 
     sf::Vector2i mousePosition(0,0);
@@ -136,10 +123,7 @@ int main(){
     bool space_clicked;
     bool mapMode = false;
 
-    sf::Font font;
-    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
-        cout << "BĹ‚Ä…d Ĺ‚adowania czcionki arial.ttf" << endl;
-    }
+
 
     sf::Text mapText;
     mapText.setFont(font);
@@ -171,7 +155,7 @@ int main(){
         mousePosition = sf::Mouse::getPosition(window);
         mouseWorldPosition = window.mapPixelToCoords(mousePosition);
 
-        playerShip.update(dt,mouseWorldPosition,mapMode ? state::ANIMACJA : activeState);
+        playerShip.update(dt,mouseWorldPosition,(mapMode || upgradeMode) ? state::ANIMACJA : activeState);
 
         sf::Vector2f cameraCenter = camera.getCenter();
         background.setPosition(cameraCenter);
@@ -193,7 +177,7 @@ int main(){
             {
                 if(event.key.code == sf::Keyboard::Space)
                 {
-                    if (!mapMode)
+                    if (!mapMode && !upgradeMode)
                     {
                         cout << "klikniety" << endl;
                         space_clicked = true;
@@ -202,50 +186,64 @@ int main(){
                 }
                 if(event.key.code == sf::Keyboard::M)
                 {
-                    mapMode = !mapMode;
-                    if (mapMode)
+                    if (!upgradeMode)
                     {
-                        camera.setSize(rozdzielczosc * 3.f);
-                        camera.setViewport(sf::FloatRect(0.1f, 0.15f, 0.8f, 0.8f));
+                        mapMode = !mapMode;
+                        if (mapMode)
+                        {
+                            camera.setSize(rozdzielczosc * 3.f);
+                            camera.setViewport(sf::FloatRect(0.1f, 0.15f, 0.8f, 0.8f));
+                        }
+                        else
+                        {
+                            camera.setSize(rozdzielczosc);
+                            camera.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f));
+                        }
                     }
-                    else
+                }
+                if(event.key.code == sf::Keyboard::U)
+                {
+                    if (!mapMode)
                     {
-                        camera.setSize(rozdzielczosc);
-                        camera.setViewport(sf::FloatRect(0.f, 0.f, 1.f, 1.f));
+                        upgradeMode = !upgradeMode;
+                    }
+                }
+                if(event.key.code == sf::Keyboard::Escape)
+                {
+                    if (upgradeMode)
+                    {
+                        upgradeMode = false;
+                    }
+                }
+                if(upgradeMode)
+                {
+                    if(event.key.code == sf::Keyboard::Num1 || event.key.code == sf::Keyboard::Numpad1)
+                    {
+                        playerShip.upgradeMaxHealth();
+                    }
+                    if(event.key.code == sf::Keyboard::Num2 || event.key.code == sf::Keyboard::Numpad2)
+                    {
+                        playerShip.upgradeMaxNitro();
+                    }
+                    if(event.key.code == sf::Keyboard::Num3 || event.key.code == sf::Keyboard::Numpad3)
+                    {
+                        playerShip.upgradeMaxStorage();
+                    }
+                    if(event.key.code == sf::Keyboard::Num4 || event.key.code == sf::Keyboard::Numpad4)
+                    {
+                        playerShip.upgradeShipSpeed();
                     }
                 }
             }
         }
 
-        float health = playerShip.getCurrentHealth();
-        float max_health = playerShip.getMaxHealth();
+        healthBar.update(dt, playerShip.getCurrentHealth(), playerShip.getMaxHealth());
+        nitroBar.update(dt, playerShip.getCurrentNitro(), playerShip.getMaxNitro(), playerShip.getNitroOnCooldown());
+        storageBar.update(dt, playerShip.getCurrentStorage(), playerShip.getMaxStorage());
 
-        float nitro = playerShip.getCurrentNitro();
-        float max_nitro = playerShip.getMaxNitro();
-
-        if(health/max_health >= 0)
+        if (upgradeMode)
         {
-            healthbar.setScale(sf::Vector2f((health/max_health),1));
-        }
-        if(nitro/max_nitro >= 0)
-        {
-            if(playerShip.getNitroOnCooldown())
-            {
-                nitrobar.setFillColor(sf::Color::Blue);
-            }
-            else
-            {
-                nitrobar.setFillColor(sf::Color::Cyan);
-            }
-            nitrobar.setScale(sf::Vector2f((nitro/max_nitro),1));
-        }
-
-        float storage = playerShip.getCurrentStorage();
-        float max_storage = playerShip.getMaxStorage();
-
-        if (max_storage > 0 && storage/max_storage >= 0)
-        {
-            storagebar.setScale(sf::Vector2f((storage/max_storage),1));
+            upgradeMenu.update(playerShip);
         }
 
 
@@ -350,14 +348,14 @@ int main(){
             }
             else
             {
-                window.draw(healtbarbackgroud);
-                window.draw(healthbar);
+                healthBar.draw(window);
+                nitroBar.draw(window);
+                storageBar.draw(window);
 
-                window.draw(nitrobarbackground);
-                window.draw(nitrobar);
-
-                window.draw(storagebarbackground);
-                window.draw(storagebar);
+                if (upgradeMode)
+                {
+                    upgradeMenu.draw(window);
+                }
             }
         }
 
