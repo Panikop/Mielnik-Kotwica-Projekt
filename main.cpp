@@ -6,6 +6,8 @@
 #include "Ship.h"
 #include "player.h"
 #include "UIBar.h"
+#include "fraction.h"
+#include <vector>
 
 #define _USE_MATH_DEFINES
 
@@ -77,6 +79,9 @@ int main(){
     bool upgradeMode = false;
     UIUpgradeMenu upgradeMenu(rozdzielczosc, font);
 
+    bool fractionsMode = false;
+    UIFractionsMenu fractionsMenu(rozdzielczosc, font);
+
 
     sf::Vector2i mousePosition(0,0);
     sf::Vector2f mouseWorldPosition(0,0);
@@ -144,7 +149,18 @@ int main(){
     player playerCharacter;
     playerCharacter.createPlayer();
 
+    // Dodanie 4 przykładowych frakcji z planetami
+    std::vector<Fraction> fractions;
+    fractions.push_back(Fraction("Centari Alliance", -600.f, -400.f, 20));
+    fractions.push_back(Fraction("Vectron Mining", 1500.f, -800.f, 20));
+    fractions.push_back(Fraction("Orion Republic", -1200.f, 1200.f, 20));
+    fractions.push_back(Fraction("Sol Empire", 2200.f, 800.f, 20));
 
+    // Inicjalizacja planet dla frakcji (czcionka, promien planety, promien interakcji, kolor)
+    fractions[0].createPlanet(font, 80.f, 160.f, sf::Color(220, 100, 100)); // Czerwona planeta
+    fractions[1].createPlanet(font, 60.f, 130.f, sf::Color(100, 220, 100)); // Zielona planeta
+    fractions[2].createPlanet(font, 100.f, 200.f, sf::Color(100, 100, 220)); // Niebieska planeta
+    fractions[3].createPlanet(font, 50.f, 110.f, sf::Color(220, 180, 50));  // Zolta planeta
 
     while (window.isOpen()){
         float dt = clock.restart().asSeconds();
@@ -155,7 +171,7 @@ int main(){
         mousePosition = sf::Mouse::getPosition(window);
         mouseWorldPosition = window.mapPixelToCoords(mousePosition);
 
-        playerShip.update(dt,mouseWorldPosition,(mapMode || upgradeMode) ? state::ANIMACJA : activeState);
+        playerShip.update(dt,mouseWorldPosition,(mapMode || upgradeMode || fractionsMode) ? state::ANIMACJA : activeState);
 
         sf::Vector2f cameraCenter = camera.getCenter();
         background.setPosition(cameraCenter);
@@ -177,7 +193,7 @@ int main(){
             {
                 if(event.key.code == sf::Keyboard::Space)
                 {
-                    if (!mapMode && !upgradeMode)
+                    if (!mapMode && !upgradeMode && !fractionsMode)
                     {
                         cout << "klikniety" << endl;
                         space_clicked = true;
@@ -186,7 +202,7 @@ int main(){
                 }
                 if(event.key.code == sf::Keyboard::M)
                 {
-                    if (!upgradeMode)
+                    if (!upgradeMode && !fractionsMode)
                     {
                         mapMode = !mapMode;
                         if (mapMode)
@@ -203,9 +219,16 @@ int main(){
                 }
                 if(event.key.code == sf::Keyboard::U)
                 {
-                    if (!mapMode)
+                    if (!mapMode && !fractionsMode)
                     {
                         upgradeMode = !upgradeMode;
+                    }
+                }
+                if(event.key.code == sf::Keyboard::F)
+                {
+                    if (!mapMode && !upgradeMode)
+                    {
+                        fractionsMode = !fractionsMode;
                     }
                 }
                 if(event.key.code == sf::Keyboard::Escape)
@@ -213,6 +236,10 @@ int main(){
                     if (upgradeMode)
                     {
                         upgradeMode = false;
+                    }
+                    if (fractionsMode)
+                    {
+                        fractionsMode = false;
                     }
                 }
                 if(upgradeMode)
@@ -245,6 +272,10 @@ int main(){
         {
             upgradeMenu.update(playerShip);
         }
+        if (fractionsMode)
+        {
+            fractionsMenu.update(fractions);
+        }
 
 
 
@@ -263,6 +294,18 @@ int main(){
                     activeState = state::STATEK;
                 }
              }
+        }
+
+        // Sprawdzanie, czy gracz jest w obszarze interakcji jakiejkolwiek planety frakcji
+        for (auto& fraction : fractions) {
+            sf::Vector2f shipPos = playerShip.getPosition();
+            sf::Vector2f planetPos = fraction.getLocation();
+            sf::Vector2f diff = shipPos - planetPos;
+            float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+
+            if (dist < fraction.interactionArea.getRadius()) {
+                cout << "W obszarze" << endl;
+            }
         }
 
 
@@ -321,6 +364,24 @@ int main(){
 
         }
 
+        // Kolizje z planetami frakcji
+        for (auto& fraction : fractions) {
+            sf::Vector2f shipPos = playerShip.getPosition();
+            sf::Vector2f planetPos = fraction.getLocation();
+            sf::Vector2f diff = shipPos - planetPos;
+            float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+            float minDistance = fraction.planetShape.getRadius() + 15.f; // 15.f to przyblizony promien statku
+
+            if (dist < minDistance) {
+                sf::Vector2f pushDir(1.f, 0.f);
+                if (dist > 0.001f) {
+                    pushDir = diff / dist;
+                }
+                float overlap = minDistance - dist;
+                playerShip.collisionMove(pushDir.x * overlap, pushDir.y * overlap, 1.f);
+            }
+        }
+
 
 
         window.clear();
@@ -337,6 +398,13 @@ int main(){
             window.draw(station);
             window.draw(dockingmodule);
             window.draw(dockingmodule_area);
+
+            // Rysowanie planet, obszarow interakcji oraz nazwy frakcji
+            for (auto& fraction : fractions) {
+                window.draw(fraction.planetShape);
+                window.draw(fraction.interactionArea);
+                window.draw(fraction.nameText);
+            }
 
 
             window.setView(window.getDefaultView());
@@ -355,6 +423,10 @@ int main(){
                 if (upgradeMode)
                 {
                     upgradeMenu.draw(window);
+                }
+                if (fractionsMode)
+                {
+                    fractionsMenu.draw(window);
                 }
             }
         }
