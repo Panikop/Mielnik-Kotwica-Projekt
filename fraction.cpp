@@ -1,12 +1,13 @@
+
 #include "fraction.h"
 
-Fraction::Fraction() 
+Fraction::Fraction()
     : name("Unknown"), location(0.f, 0.f), trustLevel(0) {}
 
-Fraction::Fraction(const std::string& n, const sf::Vector2f& loc, int trust) 
+Fraction::Fraction(const std::string& n, const sf::Vector2f& loc, int trust)
     : name(n), location(loc), trustLevel(trust) {}
 
-Fraction::Fraction(const std::string& n, float x, float y, int trust) 
+Fraction::Fraction(const std::string& n, float x, float y, int trust)
     : name(n), location(x, y), trustLevel(trust) {}
 
 void Fraction::createPlanet(const sf::Font& font, float planetRadius, float interactionRadius, sf::Color planetColor) {

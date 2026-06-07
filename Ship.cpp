@@ -7,6 +7,12 @@ void Ship::createShip()
     sprite.setOrigin(15, 15);
     velocity.x=0;
     velocity.y=0;
+
+    shieldShape.setRadius(35.f);
+    shieldShape.setOrigin(35.f, 35.f);
+    shieldShape.setFillColor(sf::Color(50, 100, 255, 100)); // Półprzezroczysty niebieski
+    shieldShape.setOutlineColor(sf::Color(50, 150, 255, 200));
+    shieldShape.setOutlineThickness(2.f);
 }
 
 
@@ -114,6 +120,39 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition, state activeState)
     float angleDegrees = angleRadians * 180/ M_PI;
     sprite.setRotation(angleDegrees);
     }
+
+
+    if(activeState == state::STATEK) {
+        // Regeneracja tarczy
+        if (current_shield < max_shield) {
+            current_shield += shieldRechargeRate * dt;
+            if (current_shield > max_shield) current_shield = max_shield;
+        }
+        shieldShape.setPosition(sprite.getPosition());
+        // Intensywność koloru tarczy zależy od jej stanu
+        shieldShape.setFillColor(sf::Color(50, 100, 255, static_cast<sf::Uint8>(100 * (current_shield / max_shield))));
+
+        // Cooldowny broni
+        if (currentCannonCooldown > 0) currentCannonCooldown -= dt;
+        if (currentMineCooldown > 0) currentMineCooldown -= dt;
+
+        // Strzelanie (Lewy Przycisk Myszy)
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+            shootCannon(mouseWorldPosition);
+        }
+        // Miny (Prawy Przycisk Myszy)
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
+            dropMine();
+        }
+    }
+
+    // Aktualizacja pocisków
+    for (auto& p : projectiles) p.update(dt);
+    projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(), [](const Projectile& p){ return !p.active; }), projectiles.end());
+
+    // Aktualizacja min
+    for (auto& m : mines) m.update(dt);
+    mines.erase(std::remove_if(mines.begin(), mines.end(), [](const Mine& m){ return !m.active; }), mines.end());
 
 }
 
@@ -223,6 +262,86 @@ bool Ship::upgradeShipSpeed() {
         current_storage -= cost;
         speedUpgradeLevel++;
         shipSpeed += 30.f;
+        return true;
+    }
+    return false;
+}
+
+void Ship::shootCannon(sf::Vector2f targetPos) {
+    if (currentCannonCooldown <= 0) {
+        sf::Vector2f shipPos = getPosition();
+        sf::Vector2f dir = targetPos - shipPos;
+        float len = sqrt(dir.x * dir.x + dir.y * dir.y);
+        if (len > 0) dir /= len;
+
+        // Zielone pociski gracza
+        projectiles.push_back(Projectile(shipPos, dir, 500.f, cannonDamage, sf::Color::Green));
+        currentCannonCooldown = cannonCooldown;
+    }
+}
+
+void Ship::dropMine() {
+    if (currentMineCooldown <= 0) {
+        mines.push_back(Mine(getPosition(), mineDamage, mineRadius));
+        currentMineCooldown = mineCooldown;
+    }
+}
+
+void Ship::takeDamage(float amount) {
+    if (current_shield > 0) {
+        current_shield -= amount;
+        if (current_shield < 0) {
+            current_health += current_shield; //przerzucenie obrazen z tarczy na hp
+            current_shield = 0;
+        }
+    } else {
+        current_health -= amount;
+    }
+    if (current_health < 0) current_health = 0;
+}
+
+float Ship::getCurrentShield() { return current_shield; }
+float Ship::getMaxShield() { return max_shield; }
+
+// --- Ulepszenia ---
+int Ship::getShieldUpgradeLevel() const { return shieldUpgradeLevel; }
+int Ship::getCannonUpgradeLevel() const { return cannonUpgradeLevel; }
+int Ship::getMineUpgradeLevel() const { return mineUpgradeLevel; }
+
+float Ship::getShieldUpgradeCost() const { return 30.f + shieldUpgradeLevel * 20.f; }
+float Ship::getCannonUpgradeCost() const { return 40.f + cannonUpgradeLevel * 25.f; }
+float Ship::getMineUpgradeCost() const { return 35.f + mineUpgradeLevel * 20.f; }
+
+bool Ship::upgradeMaxShield() {
+    float cost = getShieldUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        shieldUpgradeLevel++;
+        max_shield += 25.f;
+        current_shield += 25.f;
+        return true;
+    }
+    return false;
+}
+
+bool Ship::upgradeCannon() {
+    float cost = getCannonUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        cannonUpgradeLevel++;
+        cannonDamage += 10.f;
+        return true;
+    }
+    return false;
+}
+
+bool Ship::upgradeMines() {
+    float cost = getMineUpgradeCost();
+    if (current_storage >= cost) {
+        current_storage -= cost;
+        mineUpgradeLevel++;
+        mineDamage += 25.f;
+        mineRadius += 15.f;
         return true;
     }
     return false;

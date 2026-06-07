@@ -7,7 +7,9 @@
 #include "player.h"
 #include "UIBar.h"
 #include "fraction.h"
+#include "combat.h"
 #include <vector>
+
 
 #define _USE_MATH_DEFINES
 
@@ -46,7 +48,7 @@ int main(){
         cout << "Blad ladowania czcionki arial.ttf" << endl;
     }
 
-    // Nowoczesna stylizacja i ukÅ‚ad paskÃ³w
+    // Nowoczesna stylizacja i uk³ad pasków
     sf::Vector2f barSize(230.f, 28.f);
     float marginX = 12.f;
     float marginY = 12.f;
@@ -55,7 +57,7 @@ int main(){
     UIBar healthBar(
         sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY),
         barSize,
-        sf::Color(220, 50, 50), // Karmazynowa czerwieÅ„
+        sf::Color(220, 50, 50), // Karmazynowa czerwieñ
         "HP",
         font
     );
@@ -63,7 +65,7 @@ int main(){
     UIBar nitroBar(
         sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - spacingY),
         barSize,
-        sf::Color(0, 190, 220), // Neonowy bÅ‚Ä™kit
+        sf::Color(0, 190, 220), // Neonowy b³êkit
         "NITRO",
         font
     );
@@ -71,8 +73,16 @@ int main(){
     UIBar storageBar(
         sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - 2.f * spacingY),
         barSize,
-        sf::Color(220, 160, 30), // ZÅ‚ocisty/BrÄ…zowy
+        sf::Color(220, 160, 30), // Z³ocisty/Br¹zowy
         "CARGO",
+        font
+    );
+
+    UIBar shieldBar(
+        sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - 3.f * spacingY),
+        barSize,
+        sf::Color(50, 100, 255), // Niebieski dla tarczy
+        "SHIELD",
         font
     );
 
@@ -149,7 +159,7 @@ int main(){
     player playerCharacter;
     playerCharacter.createPlayer();
 
-    // Dodanie 4 przykÅ‚adowych frakcji z planetami
+    // Dodanie 4 przyk³adowych frakcji z planetami
     std::vector<Fraction> fractions;
     fractions.push_back(Fraction("Centari Alliance", -600.f, -400.f, 20));
     fractions.push_back(Fraction("Vectron Mining", 1500.f, -800.f, 20));
@@ -161,6 +171,19 @@ int main(){
     fractions[1].createPlanet(font, 60.f, 130.f, sf::Color(100, 220, 100)); // Zielona planeta
     fractions[2].createPlanet(font, 100.f, 200.f, sf::Color(100, 100, 220)); // Niebieska planeta
     fractions[3].createPlanet(font, 50.f, 110.f, sf::Color(220, 180, 50));  // Zolta planeta
+
+
+
+
+    ////////////////////////////////////////////// Walka
+    std::vector<Projectile> enemyProjectiles;
+    std::vector<Mine> enemyMines;
+
+    std::vector<Enemy> enemies;
+    // Tworzymy po jednym przeciwniku ka¿dego typu
+    enemies.push_back(Enemy(EnemyType::BASIC_SHIELDED, sf::Vector2f(500, 500)));
+    enemies.push_back(Enemy(EnemyType::SHOOTER, sf::Vector2f(800, 200)));
+    enemies.push_back(Enemy(EnemyType::MINER, sf::Vector2f(1200, -200)));
 
     while (window.isOpen()){
         float dt = clock.restart().asSeconds();
@@ -267,6 +290,8 @@ int main(){
         healthBar.update(dt, playerShip.getCurrentHealth(), playerShip.getMaxHealth());
         nitroBar.update(dt, playerShip.getCurrentNitro(), playerShip.getMaxNitro(), playerShip.getNitroOnCooldown());
         storageBar.update(dt, playerShip.getCurrentStorage(), playerShip.getMaxStorage());
+        shieldBar.update(dt, playerShip.getCurrentShield(), playerShip.getMaxShield());
+
 
         if (upgradeMode)
         {
@@ -364,13 +389,13 @@ int main(){
 
         }
 
-        // Kolizje z planetami frakcji
+        // COMBAT
         for (auto& fraction : fractions) {
             sf::Vector2f shipPos = playerShip.getPosition();
             sf::Vector2f planetPos = fraction.getLocation();
             sf::Vector2f diff = shipPos - planetPos;
             float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
-            float minDistance = fraction.planetShape.getRadius() + 15.f; // 15.f to przyblizony promien statku
+            float minDistance = fraction.planetShape.getRadius() + 15.f;
 
             if (dist < minDistance) {
                 sf::Vector2f pushDir(1.f, 0.f);
@@ -379,6 +404,69 @@ int main(){
                 }
                 float overlap = minDistance - dist;
                 playerShip.collisionMove(pushDir.x * overlap, pushDir.y * overlap, 1.f);
+            }
+        }
+
+
+        for (auto& proj : playerShip.projectiles) {
+            if (!proj.active) continue;
+            for (auto& enemy : enemies) {
+                if (!enemy.active) continue;
+                if (proj.shape.getGlobalBounds().intersects(enemy.shape.getGlobalBounds())) {
+                    enemy.takeDamage(proj.damage);
+                    proj.active = false;
+                    break;
+                }
+            }
+        }
+
+
+        for (auto& m : playerShip.mines) {
+            if (m.exploded && m.explosionLinger == 0.5f) { /
+                for (auto& enemy : enemies) {
+                    if (!enemy.active) continue;
+
+                    sf::Vector2f diff = enemy.shape.getPosition() - m.shape.getPosition();
+                    float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+                    if (dist <= m.blastRadius + 20.f) {
+                        enemy.takeDamage(m.damage);
+                    }
+                }
+            }
+        }
+
+
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), [](const Enemy& e){ return !e.active; }), enemies.end());
+
+
+        for (auto& enemy : enemies) {
+            enemy.update(dt, enemyProjectiles, enemyMines);
+        }
+
+
+        for (auto& p : enemyProjectiles) p.update(dt);
+        enemyProjectiles.erase(std::remove_if(enemyProjectiles.begin(), enemyProjectiles.end(), [](const Projectile& p){ return !p.active; }), enemyProjectiles.end());
+
+        for (auto& m : enemyMines) m.update(dt);
+        enemyMines.erase(std::remove_if(enemyMines.begin(), enemyMines.end(), [](const Mine& m){ return !m.active; }), enemyMines.end());
+
+
+        for (auto& proj : enemyProjectiles) {
+            if (!proj.active) continue;
+            if (proj.shape.getGlobalBounds().intersects(playerShip.sprite.getGlobalBounds())) {
+                playerShip.takeDamage(proj.damage);
+                proj.active = false;
+            }
+        }
+
+
+        for (auto& m : enemyMines) {
+            if (m.exploded && m.explosionLinger == 0.5f) {
+                sf::Vector2f diff = playerShip.getPosition() - m.shape.getPosition();
+                float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+                if (dist <= m.blastRadius + 15.f) {
+                    playerShip.takeDamage(m.damage);
+                }
             }
         }
 
@@ -406,6 +494,38 @@ int main(){
                 window.draw(fraction.nameText);
             }
 
+            // Rysowanie wrogów
+            for (auto& enemy : enemies) enemy.draw(window);
+
+            // Rysowanie min
+            for (auto& m : playerShip.mines) {
+                if (!m.exploded) window.draw(m.shape);
+                else window.draw(m.blastShape);
+            }
+
+            // Rysowanie pocisków
+            for (auto& p : playerShip.projectiles) {
+                window.draw(p.shape);
+            }
+
+            // Rysowanie statku i jego tarczy
+            window.draw(playerShip.sprite);
+            if (playerShip.getCurrentShield() > 0) {
+                window.draw(playerShip.shieldShape);
+            }
+
+
+            ////rysowanie pocisków wrogow
+            for (auto& m : enemyMines) {
+                if (!m.exploded) window.draw(m.shape);
+                else window.draw(m.blastShape);
+            }
+            for (auto& p : enemyProjectiles) {
+                window.draw(p.shape);
+            }
+
+
+
 
             window.setView(window.getDefaultView());
 
@@ -419,6 +539,7 @@ int main(){
                 healthBar.draw(window);
                 nitroBar.draw(window);
                 storageBar.draw(window);
+                shieldBar.draw(window);
 
                 if (upgradeMode)
                 {
@@ -429,6 +550,8 @@ int main(){
                     fractionsMenu.draw(window);
                 }
             }
+
+
         }
 
         else if(activeState==state::LUDZIK)
@@ -444,5 +567,3 @@ int main(){
 
     return 0;
 }
-
-

@@ -2,6 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cmath>
+#include "combat.h"
 
 using namespace std;
 
@@ -39,6 +40,25 @@ private:
     int speedUpgradeLevel = 0;
 
     sf::Vector2f velocity;
+
+
+    // zmienne do walki
+    float max_shield = 100;
+    float current_shield = max_shield;
+    float shieldRechargeRate = 5;
+
+    float cannonDamage = 15.f;
+    float cannonCooldown = 0.3f;
+    float currentCannonCooldown = 0.f;
+
+    float mineDamage = 50.f;
+    float mineRadius = 100.f;
+    float mineCooldown = 2.0f;
+    float currentMineCooldown = 0.f;
+
+    int shieldUpgradeLevel = 0;
+    int cannonUpgradeLevel = 0;
+    int mineUpgradeLevel = 0;
 
 
 
@@ -81,4 +101,27 @@ public:
     bool upgradeMaxNitro();
     bool upgradeMaxStorage();
     bool upgradeShipSpeed();
+
+    std::vector<Projectile> projectiles;
+    std::vector<Mine> mines;
+    sf::CircleShape shieldShape;
+
+    void shootCannon(sf::Vector2f targetPos);
+    void dropMine();
+    void takeDamage(float amount);
+
+    float getCurrentShield();
+    float getMaxShield();
+
+    int getShieldUpgradeLevel() const;
+    int getCannonUpgradeLevel() const;
+    int getMineUpgradeLevel() const;
+
+    float getShieldUpgradeCost() const;
+    float getCannonUpgradeCost() const;
+    float getMineUpgradeCost() const;
+
+    bool upgradeMaxShield();
+    bool upgradeCannon();
+    bool upgradeMines();
 };
