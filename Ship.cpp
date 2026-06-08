@@ -346,3 +346,10 @@ bool Ship::upgradeMines() {
     }
     return false;
 }
+
+void Ship::addStorage(float amount) {
+    current_storage += amount;
+    if (current_storage > max_storage) {
+        current_storage = max_storage;
+    }
+}

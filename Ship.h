@@ -124,4 +124,6 @@ public:
     bool upgradeMaxShield();
     bool upgradeCannon();
     bool upgradeMines();
+
+    void addStorage(float amount);
 };

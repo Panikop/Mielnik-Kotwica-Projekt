@@ -1,4 +1,3 @@
-
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cmath>
@@ -8,8 +7,9 @@
 #include "UIBar.h"
 #include "fraction.h"
 #include "combat.h"
-#include <vector>
+#include "localMap.h"
 
+#include <vector>
 
 #define _USE_MATH_DEFINES
 
@@ -17,11 +17,7 @@ using namespace std;
 
 
 
-
-
 int main(){
-
-
 
     float skala = 30;
 
@@ -159,7 +155,7 @@ int main(){
     player playerCharacter;
     playerCharacter.createPlayer();
 
-    // Dodanie 4 przyk³adowych frakcji z planetami
+    // Dodanie 4 przykladowych frakcji z planetami
     std::vector<Fraction> fractions;
     fractions.push_back(Fraction("Centari Alliance", -600.f, -400.f, 20));
     fractions.push_back(Fraction("Vectron Mining", 1500.f, -800.f, 20));
@@ -180,15 +176,50 @@ int main(){
     std::vector<Mine> enemyMines;
 
     std::vector<Enemy> enemies;
-    // Tworzymy po jednym przeciwniku ka¿dego typu
+
     enemies.push_back(Enemy(EnemyType::BASIC_SHIELDED, sf::Vector2f(500, 500)));
     enemies.push_back(Enemy(EnemyType::SHOOTER, sf::Vector2f(800, 200)));
     enemies.push_back(Enemy(EnemyType::MINER, sf::Vector2f(1200, -200)));
 
+
+    //////////////////////////////Mapy lokalne
+    LocalMap stacjaMap;
+    stacjaMap.generateStationMap(font);
+
+    std::vector<LocalMap> planetyMaps;
+    for (size_t i = 0; i < fractions.size(); ++i) {
+        LocalMap pMap;
+        sf::Color pColor = fractions[i].planetShape.getFillColor();
+        pMap.generatePlanetMap(fractions[i].getName(), sf::Color(pColor.r / 2, pColor.g / 2, pColor.b / 2), font);
+        planetyMaps.push_back(pMap);
+    }
+
+    int aktywneWnetrzeID = -1;
+
+
     while (window.isOpen()){
         float dt = clock.restart().asSeconds();
 
-        camera.setCenter(playerShip.getPosition());
+
+
+        if (activeState == state::STATEK) {
+            camera.setCenter(playerShip.getPosition());
+        }
+        else if (activeState == state::LUDZIK) {
+            camera.setCenter(playerCharacter.sprite.getPosition());
+            playerCharacter.update(dt, mouseWorldPosition);
+
+            float aktualneCargo = playerShip.getCurrentStorage();
+
+            if (aktywneWnetrzeID == -1)
+            {
+                stacjaMap.updateCollisions(playerCharacter.sprite, playerShip);
+            }
+            else
+            {
+                planetyMaps[aktywneWnetrzeID].updateCollisions(playerCharacter.sprite, playerShip);
+            }
+        }
 
 
         mousePosition = sf::Mouse::getPosition(window);
@@ -218,9 +249,35 @@ int main(){
                 {
                     if (!mapMode && !upgradeMode && !fractionsMode)
                     {
-                        cout << "klikniety" << endl;
-                        space_clicked = true;
-                        activeState = state::LUDZIK;
+                        if (activeState == state::STATEK) {
+                            float dystansStacja = sqrt(pow(((prawdziwySrodek.x - dockingmodule.getSize().x) - playerShip.getPosition().x), 2) + pow((prawdziwySrodek.y - playerShip.getPosition().y), 2));
+                            if (dystansStacja < 85) {
+                                activeState = state::LUDZIK;
+                                aktywneWnetrzeID = -1;
+                                playerCharacter.sprite.setPosition(120.f, 400.f);
+                            }
+
+                            for (size_t i = 0; i < fractions.size(); ++i) {
+                                sf::Vector2f diff = playerShip.getPosition() - fractions[i].getLocation();
+                                float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+                                if (dist < fractions[i].interactionArea.getRadius()) {
+                                    activeState = state::LUDZIK;
+                                    aktywneWnetrzeID = i;
+                                    playerCharacter.sprite.setPosition(530.f, 430.f);
+                                    break;
+                                }
+                            }
+                        }
+
+                        else if (activeState == state::LUDZIK) {
+                            bool checwyjscia = false;
+                            if (aktywneWnetrzeID == -1) checwyjscia = stacjaMap.checkExit(playerCharacter.sprite);
+                            else checwyjscia = planetyMaps[aktywneWnetrzeID].checkExit(playerCharacter.sprite);
+
+                            if (checwyjscia) {
+                                activeState = state::STATEK;
+                            }
+                        }
                     }
                 }
                 if(event.key.code == sf::Keyboard::M)
@@ -422,7 +479,7 @@ int main(){
 
 
         for (auto& m : playerShip.mines) {
-            if (m.exploded && m.explosionLinger == 0.5f) { /
+            if (m.exploded && m.explosionLinger == 0.5f) {
                 for (auto& enemy : enemies) {
                     if (!enemy.active) continue;
 
@@ -476,12 +533,11 @@ int main(){
 
         window.setView(camera);
 
-        window.draw(background);
         if(activeState==state::STATEK)
         {
+            window.draw(background);
 
             window.draw(playerShip.sprite);
-
 
             window.draw(station);
             window.draw(dockingmodule);
@@ -554,8 +610,15 @@ int main(){
 
         }
 
-        else if(activeState==state::LUDZIK)
+        else if(activeState == state::LUDZIK)
         {
+            window.clear(sf::Color(25, 27, 33));
+
+            if (aktywneWnetrzeID == -1) {
+                stacjaMap.draw(window);
+            } else {
+                planetyMaps[aktywneWnetrzeID].draw(window);
+            }
             window.draw(playerCharacter.sprite);
         }
 
