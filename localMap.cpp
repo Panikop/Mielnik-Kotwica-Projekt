@@ -72,7 +72,7 @@ void LocalMap::generatePlanetMap(std::string name, sf::Color groundColor, const 
     resources.push_back(LocalResource(sf::Vector2f(400.f, 600.f), 50));
 }
 
-void LocalMap::updateCollisions(sf::RectangleShape& playerSprite, Ship& ship) {
+void LocalMap::updateCollisions(sf::Sprite& playerSprite, Ship& ship) {
     sf::FloatRect playerBounds = playerSprite.getGlobalBounds();
 
     for (const auto& wall : walls) {
@@ -113,7 +113,7 @@ void LocalMap::updateCollisions(sf::RectangleShape& playerSprite, Ship& ship) {
     }
 }
 
-bool LocalMap::checkExit(sf::RectangleShape& playerSprite) {
+bool LocalMap::checkExit(sf::Sprite& playerSprite) {
     return playerSprite.getGlobalBounds().intersects(exitZone.getGlobalBounds());
 }
 

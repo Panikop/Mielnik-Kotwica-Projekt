@@ -14,42 +14,42 @@ UIBar::UIBar(sf::Vector2f position, sf::Vector2f size, sf::Color fillColor, cons
     : m_position(position), m_size(size), m_baseColor(fillColor), m_currentValue(0.f),
       m_lagValue(0.f), m_maxValue(100.f), m_isCritical(false), m_isOnCooldown(false), m_pulseTime(0.f)
 {
-    // Ustawienie t≥a (ciemna ramka w stylu glassmorphism)
+    // Ustawienie t≈Ça (ciemna ramka w stylu glassmorphism)
     m_bgRect.setPosition(m_position);
     m_bgRect.setSize(m_size);
-    m_bgRect.setFillColor(sf::Color(15, 15, 22, 200)); // pÛ≥przezroczysty ciemnoszary/niebieski
+    m_bgRect.setFillColor(sf::Color(15, 15, 22, 200)); // p√≥≈Çprzezroczysty ciemnoszary/niebieski
 
     // Ustawienie obramowania/ramki
     m_borderRect.setPosition(m_position);
     m_borderRect.setSize(m_size);
     m_borderRect.setFillColor(sf::Color::Transparent);
     m_borderRect.setOutlineThickness(1.5f);
-    m_borderRect.setOutlineColor(sf::Color(70, 80, 95, 200)); // metaliczny ch≥odny szary
+    m_borderRect.setOutlineColor(sf::Color(70, 80, 95, 200)); // metaliczny ch≈Çodny szary
 
-    // Kolor opÛünienia (lag) to pÛ≥przezroczysta wersja koloru wype≥nienia
+    // Kolor op√≥≈∫nienia (lag) to p√≥≈Çprzezroczysta wersja koloru wype≈Çnienia
     m_lagColor = sf::Color(fillColor.r, fillColor.g, fillColor.b, 100);
 
-    // Margines wewnπtrz paska (zostawia 3px wolnej przestrzeni wokÛ≥ wype≥nienia)
+    // Margines wewnƒÖtrz paska (zostawia 3px wolnej przestrzeni wok√≥≈Ç wype≈Çnienia)
     float padding = 3.f;
     sf::Vector2f fillSize(m_size.x - 2.f * padding, m_size.y - 2.f * padding);
     sf::Vector2f fillPos = m_position + sf::Vector2f(padding, padding);
 
-    // Ustawienie prostokπta paska opÛünienia
+    // Ustawienie prostokƒÖta paska op√≥≈∫nienia
     m_lagRect.setPosition(fillPos);
     m_lagRect.setSize(sf::Vector2f(0.f, fillSize.y));
     m_lagRect.setFillColor(m_lagColor);
 
-    // Ustawienie prostokπta w≥aúciwego paska
+    // Ustawienie prostokƒÖta w≈Ça≈õciwego paska
     m_fillRect.setPosition(fillPos);
     m_fillRect.setSize(sf::Vector2f(0.f, fillSize.y));
     m_fillRect.setFillColor(m_baseColor);
 
-    // Ustawienie odblasku (b≥yszczπcy efekt szk≥a na gÛrnej po≥owie paska)
+    // Ustawienie odblasku (b≈ÇyszczƒÖcy efekt szk≈Ça na g√≥rnej po≈Çowie paska)
     m_sheenRect.setPosition(fillPos);
     m_sheenRect.setSize(sf::Vector2f(0.f, fillSize.y / 2.f));
-    m_sheenRect.setFillColor(sf::Color(255, 255, 255, 30)); // bardzo jasny bia≥y odcieÒ
+    m_sheenRect.setFillColor(sf::Color(255, 255, 255, 30)); // bardzo jasny bia≈Çy odcie≈Ñ
 
-    // Ustawienie elementÛw tekstowych
+    // Ustawienie element√≥w tekstowych
     int charSize = static_cast<int>(m_size.y * 0.45f);
     if (charSize < 10) charSize = 10;
     if (charSize > 14) charSize = 14;
@@ -57,11 +57,11 @@ UIBar::UIBar(sf::Vector2f position, sf::Vector2f size, sf::Color fillColor, cons
     m_labelText.setFont(font);
     m_labelText.setString(label);
     m_labelText.setCharacterSize(charSize);
-    m_labelText.setFillColor(sf::Color(230, 240, 255, 255)); // elegancka, jasna z≥amana biel
+    m_labelText.setFillColor(sf::Color(230, 240, 255, 255)); // elegancka, jasna z≈Çamana biel
     m_labelText.setStyle(sf::Text::Bold);
     m_labelText.setOutlineColor(sf::Color::Black);
     m_labelText.setOutlineThickness(1.f);
-    // WyrÛwnanie etykiety pionowo do úrodka po lewej stronie
+    // Wyr√≥wnanie etykiety pionowo do ≈õrodka po lewej stronie
     sf::FloatRect labelBounds = m_labelText.getLocalBounds();
     m_labelText.setOrigin(0.f, labelBounds.top + labelBounds.height / 2.f);
     m_labelText.setPosition(m_position.x + 8.f, m_position.y + m_size.y / 2.f);
@@ -79,52 +79,52 @@ void UIBar::update(float dt, float currentValue, float maxValue, bool isOnCooldo
     m_maxValue = (maxValue > 0.f) ? maxValue : 1.f;
     m_isOnCooldown = isOnCooldown;
 
-    // Ograniczenie bieøπcej wartoúci do przedzia≥u [0, max]
+    // Ograniczenie bie≈ºƒÖcej warto≈õci do przedzia≈Çu [0, max]
     if (m_currentValue < 0.f) m_currentValue = 0.f;
     if (m_currentValue > m_maxValue) m_currentValue = m_maxValue;
 
-    // Inicjalizacja wartoúci opÛünienia w pierwszej klatce lub przy utracie synchronizacji
+    // Inicjalizacja warto≈õci op√≥≈∫nienia w pierwszej klatce lub przy utracie synchronizacji
     if (m_lagValue < 0.01f && m_currentValue > 0.01f) {
         m_lagValue = m_currentValue;
     }
 
-    // Powolna interpolacja wartoúci opÛünienia w dÛ≥.
-    // Jeúli bieøπca wartoúÊ jest wiÍksza niø opÛünienie (np. leczenie lub ≥adowanie), opÛünienie dogania jπ natychmiast
+    // Powolna interpolacja warto≈õci op√≥≈∫nienia w d√≥≈Ç.
+    // Je≈õli bie≈ºƒÖca warto≈õƒá jest wiƒôksza ni≈º op√≥≈∫nienie (np. leczenie lub ≈Çadowanie), op√≥≈∫nienie dogania jƒÖ natychmiast
     if (m_currentValue >= m_lagValue) {
         m_lagValue = m_currentValue;
     } else {
-        // Powolne przejúcie opÛünienia
+        // Powolne przej≈õcie op√≥≈∫nienia
         m_lagValue -= (m_lagValue - m_currentValue) * dt * 2.0f;
         if (m_lagValue < m_currentValue) m_lagValue = m_currentValue;
     }
 
-    // Sprawdzenie krytycznego poziomu zdrowia (poniøej 25%)
+    // Sprawdzenie krytycznego poziomu zdrowia (poni≈ºej 25%)
     m_isCritical = (m_labelText.getString() == "HP" && (m_currentValue / m_maxValue) < 0.25f);
 
     m_pulseTime += dt;
 
-    // Aktualizacja koloru ramki w zaleønoúci od stanÛw
+    // Aktualizacja koloru ramki w zale≈ºno≈õci od stan√≥w
     if (m_isCritical) {
-        // Czerwona migajπca ramka przy niskim poziomie zdrowia
+        // Czerwona migajƒÖca ramka przy niskim poziomie zdrowia
         float pulse = (std::sin(m_pulseTime * 7.f) + 1.f) / 2.f;
         m_borderRect.setOutlineColor(sf::Color(255, 40, 40, static_cast<sf::Uint8>(100 + 155 * pulse)));
     } else if (m_isOnCooldown) {
-        // Niebieska migajπca ramka podczas czasu odnowienia (cooldown)
+        // Niebieska migajƒÖca ramka podczas czasu odnowienia (cooldown)
         float pulse = (std::sin(m_pulseTime * 5.f) + 1.f) / 2.f;
         m_borderRect.setOutlineColor(sf::Color(40, 100, 255, static_cast<sf::Uint8>(100 + 155 * pulse)));
     } else {
-        // Domyúlna metaliczna ramka
+        // Domy≈õlna metaliczna ramka
         m_borderRect.setOutlineColor(sf::Color(70, 80, 95, 200));
     }
 
-    // Dynamiczne dostosowanie kolorÛw
+    // Dynamiczne dostosowanie kolor√≥w
     if (m_isOnCooldown) {
         m_fillRect.setFillColor(sf::Color(30, 80, 220)); // Ciemnoniebieski
     } else {
         m_fillRect.setFillColor(m_baseColor);
     }
 
-    // Obliczanie szerokoúci
+    // Obliczanie szeroko≈õci
     float padding = 3.f;
     float maxFillWidth = m_size.x - 2.f * padding;
     float fillWidth = maxFillWidth * (m_currentValue / m_maxValue);
@@ -134,36 +134,36 @@ void UIBar::update(float dt, float currentValue, float maxValue, bool isOnCooldo
     m_lagRect.setSize(sf::Vector2f(lagWidth, m_size.y - 2.f * padding));
     m_sheenRect.setSize(sf::Vector2f(fillWidth, (m_size.y - 2.f * padding) / 2.f));
 
-    // Aktualizacja tekstu wartoúci
+    // Aktualizacja tekstu warto≈õci
     std::stringstream ss;
     if (m_labelText.getString() == "NITRO") {
-        // Wyúwietlanie jako procent
+        // Wy≈õwietlanie jako procent
         ss << std::fixed << std::setprecision(0) << (m_currentValue / m_maxValue * 100.f) << "%";
     } else {
         ss << std::fixed << std::setprecision(0) << m_currentValue << " / " << m_maxValue;
     }
     m_valueText.setString(ss.str());
 
-    // WyrÛwnanie tekstu wartoúci do prawej strony
+    // Wyr√≥wnanie tekstu warto≈õci do prawej strony
     sf::FloatRect valBounds = m_valueText.getLocalBounds();
     m_valueText.setOrigin(valBounds.width, valBounds.top + valBounds.height / 2.f);
     m_valueText.setPosition(m_position.x + m_size.x - 8.f, m_position.y + m_size.y / 2.f);
 }
 
 void UIBar::draw(sf::RenderWindow& window) {
-    // Rysowanie t≥a i obramowania
+    // Rysowanie t≈Ça i obramowania
     window.draw(m_bgRect);
     window.draw(m_borderRect);
 
-    // Rysowanie paska opÛünienia (jeúli jest wiÍkszy niø bieøπcy pasek)
+    // Rysowanie paska op√≥≈∫nienia (je≈õli jest wiƒôkszy ni≈º bie≈ºƒÖcy pasek)
     if (m_lagRect.getSize().x > m_fillRect.getSize().x) {
         window.draw(m_lagRect);
     }
 
-    // Rysowanie w≥aúciwego paska
+    // Rysowanie w≈Ça≈õciwego paska
     if (m_fillRect.getSize().x > 0.f) {
         window.draw(m_fillRect);
-        window.draw(m_sheenRect); // rysowanie b≥yszczπcego efektu szk≥a na wierzchu
+        window.draw(m_sheenRect); // rysowanie b≈ÇyszczƒÖcego efektu szk≈Ça na wierzchu
     }
 
     // Rysowanie tekstu
@@ -177,23 +177,23 @@ UIUpgradeMenu::UIUpgradeMenu()
 UIUpgradeMenu::UIUpgradeMenu(sf::Vector2f resolution, const sf::Font& font)
     : m_font(font)
 {
-    // Ustawienie wymiarÛw i pozycji (wyúrodkowany panel 640x480)
+    // Ustawienie wymiar√≥w i pozycji (wy≈õrodkowany panel 640x480)
     m_size = sf::Vector2f(640.f, 480.f);
     m_position = sf::Vector2f((resolution.x - m_size.x) / 2.f, (resolution.y - m_size.y) / 2.f);
 
-    // Panel t≥a (ciemny glassmorphism)
+    // Panel t≈Ça (ciemny glassmorphism)
     m_bgRect.setPosition(m_position);
     m_bgRect.setSize(m_size);
     m_bgRect.setFillColor(sf::Color(10, 10, 15, 230));
 
-    // Obramowanie z neonowym b≥Íkitem
+    // Obramowanie z neonowym b≈Çƒôkitem
     m_borderRect.setPosition(m_position);
     m_borderRect.setSize(m_size);
     m_borderRect.setFillColor(sf::Color::Transparent);
     m_borderRect.setOutlineThickness(2.0f);
     m_borderRect.setOutlineColor(sf::Color(0, 191, 255, 180));
 
-    // Tytu≥ menu
+    // Tytu≈Ç menu
     m_titleText.setFont(m_font);
     m_titleText.setString("ULEPSZENIA STATKU");
     m_titleText.setCharacterSize(24);
@@ -203,7 +203,7 @@ UIUpgradeMenu::UIUpgradeMenu(sf::Vector2f resolution, const sf::Font& font)
     m_titleText.setOutlineThickness(1.5f);
     centerTextX(m_titleText, m_position.y + 30.f);
 
-    // Licznik z≥omu
+    // Licznik z≈Çomu
     m_scrapsText.setFont(m_font);
     m_scrapsText.setCharacterSize(16);
     m_scrapsText.setFillColor(sf::Color(218, 165, 32));
@@ -211,7 +211,7 @@ UIUpgradeMenu::UIUpgradeMenu(sf::Vector2f resolution, const sf::Font& font)
     m_scrapsText.setOutlineColor(sf::Color::Black);
     m_scrapsText.setOutlineThickness(1.f);
 
-    // Opcje ulepszeÒ
+    // Opcje ulepsze≈Ñ
     for (int i = 0; i < 4; ++i) {
         m_upgradesText[i].setFont(m_font);
         m_upgradesText[i].setCharacterSize(15);

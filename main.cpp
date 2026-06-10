@@ -13,11 +13,22 @@
 
 #define _USE_MATH_DEFINES
 
+#include "Textures.h"
 using namespace std;
 
 
 
+sf::Texture Textures::shipTex;
+sf::Texture Textures::bulletTex;
+sf::Texture Textures::npcTex;
+sf::Texture Textures::playerTex;
+sf::Texture Textures::ufoTex;
+sf::Texture Textures::explosionTex;
+sf::Texture Textures::mineTex;
+sf::Texture Textures::stationTex;
+
 int main(){
+    Textures::load();
 
     float skala = 30;
 
@@ -40,11 +51,11 @@ int main(){
 
 
     sf::Font font;
-    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
+    if (!font.loadFromFile("src/arial.ttf")) {
         cout << "Blad ladowania czcionki arial.ttf" << endl;
     }
 
-    // Nowoczesna stylizacja i uk³ad pasków
+    // Nowoczesna stylizacja i ukÅ‚ad paskÃ³w
     sf::Vector2f barSize(230.f, 28.f);
     float marginX = 12.f;
     float marginY = 12.f;
@@ -53,7 +64,7 @@ int main(){
     UIBar healthBar(
         sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY),
         barSize,
-        sf::Color(220, 50, 50), // Karmazynowa czerwieñ
+        sf::Color(220, 50, 50), // Karmazynowa czerwieÅ„
         "HP",
         font
     );
@@ -61,7 +72,7 @@ int main(){
     UIBar nitroBar(
         sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - spacingY),
         barSize,
-        sf::Color(0, 190, 220), // Neonowy b³êkit
+        sf::Color(0, 190, 220), // Neonowy bÅ‚Ä™kit
         "NITRO",
         font
     );
@@ -69,7 +80,7 @@ int main(){
     UIBar storageBar(
         sf::Vector2f(rozdzielczosc.x - barSize.x - marginX, rozdzielczosc.y - barSize.y - marginY - 2.f * spacingY),
         barSize,
-        sf::Color(220, 160, 30), // Z³ocisty/Br¹zowy
+        sf::Color(220, 160, 30), // ZÅ‚ocisty/BrÄ…zowy
         "CARGO",
         font
     );
@@ -93,34 +104,23 @@ int main(){
     sf::Vector2f mouseWorldPosition(0,0);
 
 
-    ///////////////////////////////////
+    //////////////////////////////
+    sf::CircleShape station(256.f);
+    station.setTexture(&Textures::stationTex);
+    station.setFillColor(sf::Color::White);
+    station.setPosition(1000, 100);
 
-    sf::RectangleShape station(sf::Vector2f(100,100));
-    station.setFillColor(sf::Color::Green);
-    station.setPosition(1000,100);
+    sf::Vector2f station_center(station.getPosition().x + 256.f, station.getPosition().y + 256.f);
 
-
-    sf::Vector2f station_center(station.getGlobalBounds().left+(station.getSize().x/2),station.getGlobalBounds().top+(station.getSize().y/2) );
-
-    sf::RectangleShape dockingmodule(sf::Vector2f(30,30));
-    dockingmodule.setFillColor(sf::Color::Magenta);
-    dockingmodule.setPosition(station.getPosition().x-dockingmodule.getSize().x, station.getPosition().y+station.getSize().y/2-dockingmodule.getSize().y/2);
-
-
-    sf::FloatRect granice = dockingmodule.getGlobalBounds();
-
-    float srodekX = granice.left + (granice.width / 2.0f);
-    float srodekY = granice.top + (granice.height / 2.0f);
-
-    sf::Vector2f prawdziwySrodek(srodekX, srodekY);
-
+    // Strefa dokowania bez fioletowego kwadratu
+    sf::Vector2f prawdziwySrodek(station.getPosition().x, station_center.y);
 
     sf::CircleShape dockingmodule_area(85);
     dockingmodule_area.setOrigin(85,85);
     dockingmodule_area.setOutlineColor(sf::Color::Yellow);
     dockingmodule_area.setOutlineThickness(3);
     dockingmodule_area.setFillColor(sf::Color::Transparent);
-    dockingmodule_area.setPosition(prawdziwySrodek.x-dockingmodule.getSize().x,prawdziwySrodek.y);
+    dockingmodule_area.setPosition(prawdziwySrodek);
 
 
 
@@ -176,6 +176,7 @@ int main(){
     std::vector<Mine> enemyMines;
 
     std::vector<Enemy> enemies;
+  std::vector<Explosion> explosions;
 
     enemies.push_back(Enemy(EnemyType::BASIC_SHIELDED, sf::Vector2f(500, 500)));
     enemies.push_back(Enemy(EnemyType::SHOOTER, sf::Vector2f(800, 200)));
@@ -250,7 +251,7 @@ int main(){
                     if (!mapMode && !upgradeMode && !fractionsMode)
                     {
                         if (activeState == state::STATEK) {
-                            float dystansStacja = sqrt(pow(((prawdziwySrodek.x - dockingmodule.getSize().x) - playerShip.getPosition().x), 2) + pow((prawdziwySrodek.y - playerShip.getPosition().y), 2));
+                            float dystansStacja = sqrt(pow((prawdziwySrodek.x - playerShip.getPosition().x), 2) + pow((prawdziwySrodek.y - playerShip.getPosition().y), 2));
                             if (dystansStacja < 85) {
                                 activeState = state::LUDZIK;
                                 aktywneWnetrzeID = -1;
@@ -361,7 +362,7 @@ int main(){
 
 
 
-        float dystans = sqrt(pow(((prawdziwySrodek.x-dockingmodule.getSize().x) - playerShip.getPosition().x),2) + pow((prawdziwySrodek.y - playerShip.getPosition().y),2));
+        float dystans = sqrt(pow((prawdziwySrodek.x - playerShip.getPosition().x), 2) + pow((prawdziwySrodek.y - playerShip.getPosition().y), 2));
         if(dystans < 85)
         {
             cout << "Gracz w zasiegu" << endl;
@@ -391,59 +392,18 @@ int main(){
         }
 
 
-        sf::FloatRect penetrationDepth;
-        if(playerShip.sprite.getGlobalBounds().intersects(station.getGlobalBounds(),penetrationDepth))
-        {
-            if(penetrationDepth.width<penetrationDepth.height)
-            {
-                if(playerShip.getPosition().x < station_center.x)
-                {
-                    playerShip.collisionMove(-penetrationDepth.width,0,1);
-                }
-                else
-                {
-                    playerShip.collisionMove(penetrationDepth.width,0,1);
-                }
-            }
-            else
-            {
-                if(playerShip.getPosition().y < station_center.y)
-                {
-                    playerShip.collisionMove(0,-penetrationDepth.height,1);
-                }
-                else
-                {
-                    playerShip.collisionMove(0,penetrationDepth.height,1);
-                }
-            }
+        sf::Vector2f shipPos = playerShip.getPosition();
+        sf::Vector2f diff = shipPos - station_center;
+        float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+        float minDistance = station.getRadius() + 15.f; // 15.f dla promienia statku
 
-        }
-        sf::FloatRect penetrationDepth2;
-        if(playerShip.sprite.getGlobalBounds().intersects(dockingmodule.getGlobalBounds(),penetrationDepth2))
-        {
-            if(penetrationDepth2.width<penetrationDepth2.height)
-            {
-                if(playerShip.getPosition().x < prawdziwySrodek.x)
-                {
-                    playerShip.collisionMove(-penetrationDepth2.width,0,1);
-                }
-                else
-                {
-                    playerShip.collisionMove(penetrationDepth2.width,0,1);
-                }
+        if (dist < minDistance) {
+            sf::Vector2f pushDir(1.f, 0.f);
+            if (dist > 0.001f) {
+                pushDir = diff / dist;
             }
-            else
-            {
-                if(playerShip.getPosition().y < prawdziwySrodek.y)
-                {
-                    playerShip.collisionMove(0,-penetrationDepth2.height,1);
-                }
-                else
-                {
-                    playerShip.collisionMove(0,penetrationDepth2.height,1);
-                }
-            }
-
+            float overlap = minDistance - dist;
+            playerShip.collisionMove(pushDir.x * overlap, pushDir.y * overlap, 1.f);
         }
 
         // COMBAT
@@ -470,7 +430,9 @@ int main(){
             for (auto& enemy : enemies) {
                 if (!enemy.active) continue;
                 if (proj.shape.getGlobalBounds().intersects(enemy.shape.getGlobalBounds())) {
-                    enemy.takeDamage(proj.damage);
+                    if (enemy.takeDamage(proj.damage)) {
+                        explosions.push_back(Explosion(enemy.shape.getPosition()));
+                    }
                     proj.active = false;
                     break;
                 }
@@ -486,7 +448,9 @@ int main(){
                     sf::Vector2f diff = enemy.shape.getPosition() - m.shape.getPosition();
                     float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
                     if (dist <= m.blastRadius + 20.f) {
-                        enemy.takeDamage(m.damage);
+                        if (enemy.takeDamage(m.damage)) {
+              explosions.push_back(Explosion(enemy.shape.getPosition()));
+            }
                     }
                 }
             }
@@ -504,6 +468,9 @@ int main(){
         for (auto& p : enemyProjectiles) p.update(dt);
         enemyProjectiles.erase(std::remove_if(enemyProjectiles.begin(), enemyProjectiles.end(), [](const Projectile& p){ return !p.active; }), enemyProjectiles.end());
 
+        for (auto& ex : explosions) ex.update(dt);
+        explosions.erase(std::remove_if(explosions.begin(), explosions.end(), [](const Explosion& ex){ return !ex.active; }), explosions.end());
+
         for (auto& m : enemyMines) m.update(dt);
         enemyMines.erase(std::remove_if(enemyMines.begin(), enemyMines.end(), [](const Mine& m){ return !m.active; }), enemyMines.end());
 
@@ -511,7 +478,9 @@ int main(){
         for (auto& proj : enemyProjectiles) {
             if (!proj.active) continue;
             if (proj.shape.getGlobalBounds().intersects(playerShip.sprite.getGlobalBounds())) {
-                playerShip.takeDamage(proj.damage);
+                if (playerShip.takeDamage(proj.damage)) {
+                    explosions.push_back(Explosion(playerShip.getPosition()));
+                }
                 proj.active = false;
             }
         }
@@ -522,7 +491,9 @@ int main(){
                 sf::Vector2f diff = playerShip.getPosition() - m.shape.getPosition();
                 float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
                 if (dist <= m.blastRadius + 15.f) {
-                    playerShip.takeDamage(m.damage);
+                    if (playerShip.takeDamage(m.damage)) {
+            explosions.push_back(Explosion(playerShip.getPosition()));
+          }
                 }
             }
         }
@@ -540,7 +511,6 @@ int main(){
             window.draw(playerShip.sprite);
 
             window.draw(station);
-            window.draw(dockingmodule);
             window.draw(dockingmodule_area);
 
             // Rysowanie planet, obszarow interakcji oraz nazwy frakcji
@@ -550,7 +520,7 @@ int main(){
                 window.draw(fraction.nameText);
             }
 
-            // Rysowanie wrogów
+            // Rysowanie wrogÃ³w
             for (auto& enemy : enemies) enemy.draw(window);
 
             // Rysowanie min
@@ -559,7 +529,7 @@ int main(){
                 else window.draw(m.blastShape);
             }
 
-            // Rysowanie pocisków
+            // Rysowanie pociskÃ³w
             for (auto& p : playerShip.projectiles) {
                 window.draw(p.shape);
             }
@@ -571,13 +541,17 @@ int main(){
             }
 
 
-            ////rysowanie pocisków wrogow
+            ////rysowanie pociskÃ³w wrogow
             for (auto& m : enemyMines) {
                 if (!m.exploded) window.draw(m.shape);
                 else window.draw(m.blastShape);
             }
             for (auto& p : enemyProjectiles) {
                 window.draw(p.shape);
+            }
+
+            for (auto& ex : explosions) {
+                ex.draw(window);
             }
 
 

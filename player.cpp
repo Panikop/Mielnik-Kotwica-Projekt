@@ -1,12 +1,10 @@
 #include "player.h"
-
-#include "player.h"
+#include "Textures.h"
 
 void player::createPlayer()
 {
-    sprite.setSize(sf::Vector2f(24, 24));
-    sprite.setFillColor(sf::Color::Yellow);
-    sprite.setOrigin(12, 12);
+    sprite.setTexture(Textures::playerTex);
+    sprite.setOrigin(8.5f, 16.f); // 17x32
     sprite.setPosition(200.f, 400.f);
 }
 
