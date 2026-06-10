@@ -1,5 +1,6 @@
-#include "localMap.h"
-#include "Ship.h"
+#include "LocalMap.h"
+#include <iostream>
+#include <fstream>
 #include <cmath>
 
 LocalMap::LocalMap() {
@@ -99,12 +100,12 @@ void LocalMap::updateCollisions(sf::Sprite& playerSprite, Ship& ship) {
         if (!res.collected) {
             if (playerBounds.intersects(res.shape.getGlobalBounds())) {
 
-                if (ship.getCurrentStorage() + res.amount <= ship.getMaxStorage()) {
-                    ship.addStorage(res.amount);
+                if (ship.getCurrentScrap() + res.amount <= ship.getMaxScrap()) {
+                    ship.addScrap(res.amount);
                     res.collected = true;
                 } else {
-                    float freeSpace = ship.getMaxStorage() - ship.getCurrentStorage();
-                    ship.addStorage(freeSpace);
+                    float freeSpace = ship.getMaxScrap() - ship.getCurrentScrap();
+                    ship.addScrap(freeSpace);
                     res.amount -= freeSpace;
                     if (freeSpace > 0) res.collected = true;
                 }

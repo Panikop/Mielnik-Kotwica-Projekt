@@ -2,21 +2,26 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <cmath>
-#include "combat.h"
+#include "Projectile.h"
+#include "Mine.h"
 
 using namespace std;
 
 enum class state{
+MENU,
 STATEK,
 LUDZIK,
 ANIMACJA,
+DEATH
 };
 
 
 
 
-class Ship{
+class SaveSystem;
 
+class Ship{
+    friend class SaveSystem;
 private:
 
     float max_health=100;
@@ -28,8 +33,14 @@ private:
     float nitroRechargeRate = 1;
     bool nitroOnCooldown = false;
 
-    float max_storage = 100;
-    float current_storage = 50;
+    float max_scrap = 50;
+    float current_scrap = 50;
+
+    float max_electronics = 50;
+    float current_electronics = 50;
+
+    float max_rare_metals = 50;
+    float current_rare_metals = 50;
 
     float shipSpeed = 200;
     float movementMultiplier = 1;
@@ -80,8 +91,14 @@ public:
     float getCurrentNitro();
     bool getNitroOnCooldown();
 
-    float getMaxStorage();
-    float getCurrentStorage();
+    float getMaxScrap();
+    float getCurrentScrap();
+
+    float getMaxElectronics();
+    float getCurrentElectronics();
+
+    float getMaxRareMetals();
+    float getCurrentRareMetals();
 
     void collisionMove(float x, float y, float multiplier);
 
@@ -90,10 +107,10 @@ public:
     int getStorageUpgradeLevel() const;
     int getSpeedUpgradeLevel() const;
 
-    float getHealthUpgradeCost() const;
-    float getNitroUpgradeCost() const;
-    float getStorageUpgradeCost() const;
-    float getSpeedUpgradeCost() const;
+    sf::Vector3f getHealthUpgradeCost() const;
+    sf::Vector3f getNitroUpgradeCost() const;
+    sf::Vector3f getStorageUpgradeCost() const;
+    sf::Vector3f getSpeedUpgradeCost() const;
 
     float getShipSpeed() const;
 
@@ -117,13 +134,15 @@ public:
     int getCannonUpgradeLevel() const;
     int getMineUpgradeLevel() const;
 
-    float getShieldUpgradeCost() const;
-    float getCannonUpgradeCost() const;
-    float getMineUpgradeCost() const;
+    sf::Vector3f getShieldUpgradeCost() const;
+    sf::Vector3f getCannonUpgradeCost() const;
+    sf::Vector3f getMineUpgradeCost() const;
 
     bool upgradeMaxShield();
     bool upgradeCannon();
     bool upgradeMines();
 
-    void addStorage(float amount);
+    void addScrap(float amount);
+    void addElectronics(float amount);
+    void addRareMetals(float amount);
 };
