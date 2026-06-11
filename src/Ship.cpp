@@ -171,34 +171,41 @@ void Ship::collisionMove(float x, float y, float multiplier) {
   velocity.y = y * multiplier;
 }
 
-float Ship::getMaxStorage() { return Ship::max_storage; }
+float Ship::getMaxScrap() { return Ship::max_scrap; }
+float Ship::getCurrentScrap() { return Ship::current_scrap; }
 
-float Ship::getCurrentStorage() { return Ship::current_storage; }
+float Ship::getMaxElectronics() { return Ship::max_electronics; }
+float Ship::getCurrentElectronics() { return Ship::current_electronics; }
+
+float Ship::getMaxRareMetals() { return Ship::max_rare_metals; }
+float Ship::getCurrentRareMetals() { return Ship::current_rare_metals; }
 
 int Ship::getHealthUpgradeLevel() const { return healthUpgradeLevel; }
 int Ship::getNitroUpgradeLevel() const { return nitroUpgradeLevel; }
 int Ship::getStorageUpgradeLevel() const { return storageUpgradeLevel; }
 int Ship::getSpeedUpgradeLevel() const { return speedUpgradeLevel; }
 
-float Ship::getHealthUpgradeCost() const {
-  return 20.f + healthUpgradeLevel * 15.f;
+sf::Vector3f Ship::getHealthUpgradeCost() const {
+  return sf::Vector3f(20.f + healthUpgradeLevel * 15.f, 10.f + healthUpgradeLevel * 5.f, 5.f + healthUpgradeLevel * 2.f);
 }
-float Ship::getNitroUpgradeCost() const {
-  return 25.f + nitroUpgradeLevel * 15.f;
+sf::Vector3f Ship::getNitroUpgradeCost() const {
+  return sf::Vector3f(25.f + nitroUpgradeLevel * 15.f, 15.f + nitroUpgradeLevel * 10.f, 5.f + nitroUpgradeLevel * 5.f);
 }
-float Ship::getStorageUpgradeCost() const {
-  return 30.f + storageUpgradeLevel * 20.f;
+sf::Vector3f Ship::getStorageUpgradeCost() const {
+  return sf::Vector3f(30.f + storageUpgradeLevel * 20.f, 5.f + storageUpgradeLevel * 5.f, 0.f + storageUpgradeLevel * 2.f);
 }
-float Ship::getSpeedUpgradeCost() const {
-  return 40.f + speedUpgradeLevel * 25.f;
+sf::Vector3f Ship::getSpeedUpgradeCost() const {
+  return sf::Vector3f(40.f + speedUpgradeLevel * 25.f, 20.f + speedUpgradeLevel * 15.f, 10.f + speedUpgradeLevel * 5.f);
 }
 
 float Ship::getShipSpeed() const { return shipSpeed; }
 
 bool Ship::upgradeMaxHealth() {
-  float cost = getHealthUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getHealthUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     healthUpgradeLevel++;
     max_health += 25.f;
     current_health += 25.f;
@@ -208,9 +215,11 @@ bool Ship::upgradeMaxHealth() {
 }
 
 bool Ship::upgradeMaxNitro() {
-  float cost = getNitroUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getNitroUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     nitroUpgradeLevel++;
     max_nitro += 15.f;
     current_nitro += 15.f;
@@ -220,20 +229,26 @@ bool Ship::upgradeMaxNitro() {
 }
 
 bool Ship::upgradeMaxStorage() {
-  float cost = getStorageUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getStorageUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     storageUpgradeLevel++;
-    max_storage += 50.f;
+    max_scrap += 50.f;
+    max_electronics += 50.f;
+    max_rare_metals += 50.f;
     return true;
   }
   return false;
 }
 
 bool Ship::upgradeShipSpeed() {
-  float cost = getSpeedUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getSpeedUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     speedUpgradeLevel++;
     shipSpeed += 30.f;
     return true;
@@ -289,20 +304,22 @@ int Ship::getShieldUpgradeLevel() const { return shieldUpgradeLevel; }
 int Ship::getCannonUpgradeLevel() const { return cannonUpgradeLevel; }
 int Ship::getMineUpgradeLevel() const { return mineUpgradeLevel; }
 
-float Ship::getShieldUpgradeCost() const {
-  return 30.f + shieldUpgradeLevel * 20.f;
+sf::Vector3f Ship::getShieldUpgradeCost() const {
+  return sf::Vector3f(30.f + shieldUpgradeLevel * 20.f, 25.f + shieldUpgradeLevel * 10.f, 15.f + shieldUpgradeLevel * 5.f);
 }
-float Ship::getCannonUpgradeCost() const {
-  return 40.f + cannonUpgradeLevel * 25.f;
+sf::Vector3f Ship::getCannonUpgradeCost() const {
+  return sf::Vector3f(40.f + cannonUpgradeLevel * 25.f, 30.f + cannonUpgradeLevel * 15.f, 20.f + cannonUpgradeLevel * 10.f);
 }
-float Ship::getMineUpgradeCost() const {
-  return 35.f + mineUpgradeLevel * 20.f;
+sf::Vector3f Ship::getMineUpgradeCost() const {
+  return sf::Vector3f(35.f + mineUpgradeLevel * 20.f, 20.f + mineUpgradeLevel * 15.f, 10.f + mineUpgradeLevel * 5.f);
 }
 
 bool Ship::upgradeMaxShield() {
-  float cost = getShieldUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getShieldUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     shieldUpgradeLevel++;
     max_shield += 25.f;
     current_shield += 25.f;
@@ -312,9 +329,11 @@ bool Ship::upgradeMaxShield() {
 }
 
 bool Ship::upgradeCannon() {
-  float cost = getCannonUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getCannonUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     cannonUpgradeLevel++;
     cannonDamage += 10.f;
     return true;
@@ -323,9 +342,11 @@ bool Ship::upgradeCannon() {
 }
 
 bool Ship::upgradeMines() {
-  float cost = getMineUpgradeCost();
-  if (current_storage >= cost) {
-    current_storage -= cost;
+  sf::Vector3f cost = getMineUpgradeCost();
+  if (current_scrap >= cost.x && current_electronics >= cost.y && current_rare_metals >= cost.z) {
+    current_scrap -= cost.x;
+    current_electronics -= cost.y;
+    current_rare_metals -= cost.z;
     mineUpgradeLevel++;
     mineDamage += 25.f;
     mineRadius += 15.f;
@@ -334,9 +355,23 @@ bool Ship::upgradeMines() {
   return false;
 }
 
-void Ship::addStorage(float amount) {
-  current_storage += amount;
-  if (current_storage > max_storage) {
-    current_storage = max_storage;
+void Ship::addScrap(float amount) {
+  current_scrap += amount;
+  if (current_scrap > max_scrap) {
+    current_scrap = max_scrap;
+  }
+}
+
+void Ship::addElectronics(float amount) {
+  current_electronics += amount;
+  if (current_electronics > max_electronics) {
+    current_electronics = max_electronics;
+  }
+}
+
+void Ship::addRareMetals(float amount) {
+  current_rare_metals += amount;
+  if (current_rare_metals > max_rare_metals) {
+    current_rare_metals = max_rare_metals;
   }
 }

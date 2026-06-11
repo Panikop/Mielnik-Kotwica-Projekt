@@ -23,9 +23,9 @@ void player::update(float dt, sf::Vector2f mouseWorldPosition)
         sprite.move(movement * playerSpeed * dt);
     }
 
-    sf::Vector2f playerPos = sprite.getPosition();
-    sf::Vector2f dir = mouseWorldPosition - playerPos;
-    float angleRadians = std::atan2(dir.y, dir.x);
-    float angleDegrees = angleRadians * 180.f / 3.14159265f;
-    sprite.setRotation(angleDegrees);
+    // sf::Vector2f playerPos = sprite.getPosition();
+    // sf::Vector2f dir = mouseWorldPosition - playerPos;
+    // float angleRadians = std::atan2(dir.y, dir.x);
+    // float angleDegrees = angleRadians * 180.f / 3.14159265f;
+    // sprite.setRotation(angleDegrees);
 }
