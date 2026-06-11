@@ -5,8 +5,10 @@
 
 class Ship;
 
+#include "Textures.h"
+
 struct LocalNPC {
-    sf::CircleShape shape;
+    sf::Sprite shape;
     sf::Text nameText;
     std::string name;
     std::string dialogue;
@@ -15,10 +17,10 @@ struct LocalNPC {
         name = n;
         dialogue = dial;
 
-        shape.setRadius(12.f);
-        shape.setOrigin(12.f, 12.f);
+        shape.setTexture(Textures::npcTex);
+        shape.setOrigin(10.f, 16.f); // 20x32
         shape.setPosition(pos);
-        shape.setFillColor(sf::Color(50, 200, 50));
+        shape.setColor(sf::Color(50, 200, 50));
 
         nameText.setFont(font);
         nameText.setString(name);
@@ -61,7 +63,7 @@ public:
     void generateStationMap(const sf::Font& font);
     void generatePlanetMap(std::string name, sf::Color groundColor, const sf::Font& font);
 
-    void updateCollisions(sf::RectangleShape& playerSprite, Ship& ship);
-    bool checkExit(sf::RectangleShape& playerSprite);
+    void updateCollisions(sf::Sprite& playerSprite, Ship& ship);
+    bool checkExit(sf::Sprite& playerSprite);
     void draw(sf::RenderWindow& window);
 };

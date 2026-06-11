@@ -69,7 +69,7 @@ public:
     float calculateMovementMultiplier();
 
     void createShip();
-    sf::RectangleShape sprite;
+    sf::Sprite sprite;
 
 
 
@@ -108,7 +108,7 @@ public:
 
     void shootCannon(sf::Vector2f targetPos);
     void dropMine();
-    void takeDamage(float amount);
+    bool takeDamage(float amount);
 
     float getCurrentShield();
     float getMaxShield();

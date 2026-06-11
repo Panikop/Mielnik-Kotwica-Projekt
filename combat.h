@@ -5,7 +5,7 @@
 
 
 struct Projectile {
-    sf::CircleShape shape;
+    sf::Sprite shape;
     sf::Vector2f velocity;
     float damage;
     float lifetime;
@@ -17,8 +17,8 @@ struct Projectile {
 
 class Mine {
 public:
-    sf::CircleShape shape;
-    sf::CircleShape blastShape;
+    sf::Sprite shape;
+    sf::Sprite blastShape;
     float timer;
     float maxTimer;
     float blastRadius;
@@ -31,6 +31,17 @@ public:
     void update(float dt);
 };
 
+struct Explosion {
+    sf::Sprite sprite;
+    float lifetime;
+    float maxLifetime;
+    bool active;
+
+    Explosion(sf::Vector2f pos);
+    void update(float dt);
+    void draw(sf::RenderWindow& window);
+};
+
 enum class EnemyType {
     BASIC_SHIELDED, // Stojacy z odnawiajaca sie tarcza
     SHOOTER,        // Stojacy, strzelajacy przed siebie
@@ -40,7 +51,7 @@ enum class EnemyType {
 class Enemy {
 public:
     EnemyType type;
-    sf::RectangleShape shape;
+    sf::Sprite shape;
     float hp;
     float maxHp;
     bool active;
@@ -67,6 +78,6 @@ public:
 
     Enemy(EnemyType t, sf::Vector2f pos);
     void update(float dt, std::vector<Projectile>& outProjectiles, std::vector<Mine>& outMines);
-    void takeDamage(float damage);
+    bool takeDamage(float damage);
     void draw(sf::RenderWindow& window);
 };

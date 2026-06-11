@@ -27,5 +27,5 @@ public:
     void update(float dt, sf::Vector2f mouseWorldPosition);
 
     void createPlayer();
-    sf::RectangleShape sprite;
+    sf::Sprite sprite;
 };
