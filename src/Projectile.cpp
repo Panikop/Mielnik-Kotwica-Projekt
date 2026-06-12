@@ -1,5 +1,5 @@
-#include "Projectile.h"
-#include "Textures.h"
+#include "../include/Projectile.h"
+#include "../include/Textures.h"
 #include <cmath>
 
 Projectile::Projectile(sf::Vector2f startPos, sf::Vector2f direction,

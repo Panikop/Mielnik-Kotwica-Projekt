@@ -1,5 +1,5 @@
-#include "Explosion.h"
-#include "Textures.h"
+#include "../include/Explosion.h"
+#include "../include/Textures.h"
 
 Explosion::Explosion(sf::Vector2f pos) {
   maxLifetime = 0.5f;
@@ -19,7 +19,7 @@ void Explosion::update(float dt) {
   // Efekt zanikania i powiekszania
   float progress = 1.0f - (lifetime / maxLifetime);
   if (progress > 1.0f) progress = 1.0f;
-  
+
   float scale = 1.0f + progress * 1.5f; // Rozrasta sie
   sprite.setScale(scale, scale);
 

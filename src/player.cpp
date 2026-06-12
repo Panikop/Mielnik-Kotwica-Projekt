@@ -1,5 +1,5 @@
-#include "player.h"
-#include "Textures.h"
+#include "../include/player.h"
+#include "../include/Textures.h"
 
 void player::createPlayer()
 {

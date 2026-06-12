@@ -2,30 +2,32 @@
 #include <cmath>
 #include <iostream>
 
-#include "Ship.h"
-#include "UIBar.h"
-#include "UIUpgradeMenu.h"
-#include "UIFractionsMenu.h"
-#include "UIInventoryMenu.h"
-#include "UISaveMenu.h"
-#include "UIInventoryBar.h"
-#include "Projectile.h"
-#include "Mine.h"
-#include "Explosion.h"
-#include "Enemy.h"
-#include "fraction.h"
-#include "LocalMap.h"
-#include "LocalResource.h"
-#include "mainmenu.h"
-#include "player.h"
-#include "SaveSystem.h"
-#include "Textures.h"
+#include "include/Ship.h"
+#include "include/UIBar.h"
+#include "include/UIUpgradeMenu.h"
+#include "include/UIFractionsMenu.h"
+#include "include/UIInventoryMenu.h"
+#include "include/UISaveMenu.h"
+#include "include/UIInventoryBar.h"
+#include "include/Projectile.h"
+#include "include/Mine.h"
+#include "include/Explosion.h"
+#include "include/Enemy.h"
+#include "include/fraction.h"
+#include "include/LocalMap.h"
+#include "include/LocalResource.h"
+#include "include/mainmenu.h"
+#include "include/player.h"
+#include "include/SaveSystem.h"
+#include "include/Textures.h"
+#include "include/QuestSystem.h"
+#include "include/UIQuestMenu.h"
 
 #include <vector>
 
 #define _USE_MATH_DEFINES
 
-#include "Textures.h"
+#include "include/Textures.h"
 using namespace std;
 
 sf::Texture Textures::shipTex;
@@ -64,7 +66,7 @@ int main() {
     cout << "Blad ladowania czcionki arial.ttf" << endl;
   }
 
-  // Nowoczesna stylizacja i układ pasków
+
   sf::Vector2f barSize(230.f, 28.f);
   float marginX = 12.f;
   float marginY = 12.f;
@@ -72,18 +74,18 @@ int main() {
 
   UIBar healthBar(sf::Vector2f(rozdzielczosc.x - barSize.x - marginX,
                                rozdzielczosc.y - barSize.y - marginY),
-                  barSize, sf::Color(220, 50, 50), // Karmazynowa czerwień
+                  barSize, sf::Color(220, 50, 50),
                   "HP", font);
 
   UIBar nitroBar(sf::Vector2f(rozdzielczosc.x - barSize.x - marginX,
                               rozdzielczosc.y - barSize.y - marginY - spacingY),
-                 barSize, sf::Color(0, 190, 220), // Neonowy błękit
+                 barSize, sf::Color(0, 190, 220),
                  "NITRO", font);
 
   UIBar shieldBar(
       sf::Vector2f(rozdzielczosc.x - barSize.x - marginX,
                    rozdzielczosc.y - barSize.y - marginY - 2.f * spacingY),
-      barSize, sf::Color(50, 100, 255), // Niebieski dla tarczy
+      barSize, sf::Color(50, 100, 255),
       "SHIELD", font);
 
   UIInventoryBar inventoryBar(
@@ -102,6 +104,9 @@ int main() {
 
   bool saveMode = false;
   UISaveMenu saveMenu(rozdzielczosc, font);
+
+  bool questMode = false;
+  UIQuestMenu questMenu(rozdzielczosc, font);
 
   sf::Vector2i mousePosition(0, 0);
   sf::Vector2f mouseWorldPosition(0, 0);
@@ -186,23 +191,20 @@ int main() {
   player playerCharacter;
   playerCharacter.createPlayer();
 
-  // Dodanie 4 przykladowych frakcji z planetami
   std::vector<Fraction> fractions;
   fractions.push_back(Fraction("Centari Alliance", -600.f, -400.f, 20));
   fractions.push_back(Fraction("Vectron Mining", 1500.f, -800.f, 20));
   fractions.push_back(Fraction("Orion Republic", -1200.f, 1200.f, 20));
   fractions.push_back(Fraction("Sol Empire", 2200.f, 800.f, 20));
 
-  // Inicjalizacja planet dla frakcji (czcionka, promien planety, promien
-  // interakcji, kolor)
   fractions[0].createPlanet(font, 80.f, 160.f,
-                            sf::Color(220, 100, 100)); // Czerwona planeta
+                            sf::Color(220, 100, 100));
   fractions[1].createPlanet(font, 60.f, 130.f,
-                            sf::Color(100, 220, 100)); // Zielona planeta
+                            sf::Color(100, 220, 100));
   fractions[2].createPlanet(font, 100.f, 200.f,
-                            sf::Color(100, 100, 220)); // Niebieska planeta
+                            sf::Color(100, 100, 220));
   fractions[3].createPlanet(font, 50.f, 110.f,
-                            sf::Color(220, 180, 50)); // Zolta planeta
+                            sf::Color(220, 180, 50));
 
   ////////////////////////////////////////////// Walka
   std::vector<Projectile> enemyProjectiles;
@@ -231,6 +233,14 @@ int main() {
 
   int aktywneWnetrzeID = -1;
 
+  ////////////////////////////////////////
+
+  LocalMap asteroidaMap;
+  asteroidaMap.generateAsteroidMap(font);
+
+  QuestSystem questSystem;
+  questSystem.generateAvailableQuests(fractions);
+
   while (window.isOpen()) {
     float dt = clock.restart().asSeconds();
 
@@ -243,10 +253,13 @@ int main() {
       float aktualneCargo = playerShip.getCurrentScrap();
 
       if (aktywneWnetrzeID == -1) {
-        stacjaMap.updateCollisions(playerCharacter.sprite, playerShip);
-      } else {
-        planetyMaps[aktywneWnetrzeID].updateCollisions(playerCharacter.sprite,
-                                                       playerShip);
+        stacjaMap.updateCollisions(playerCharacter.sprite, playerShip, questSystem);
+      }
+      else if (aktywneWnetrzeID == -2) {
+        asteroidaMap.updateCollisions(playerCharacter.sprite, playerShip, questSystem);
+      }
+       else {
+        planetyMaps[aktywneWnetrzeID].updateCollisions(playerCharacter.sprite, playerShip, questSystem);
       }
     }
 
@@ -289,20 +302,30 @@ int main() {
                   pow((prawdziwySrodek.x - playerShip.getPosition().x), 2) +
                   pow((prawdziwySrodek.y - playerShip.getPosition().y), 2));
               if (dystansStacja < 85) {
-                activeState = state::LUDZIK;
-                aktywneWnetrzeID = -1;
-                playerCharacter.sprite.setPosition(120.f, 400.f);
+                    activeState = state::LUDZIK;
+                    aktywneWnetrzeID = -1;
+                    playerCharacter.sprite.setPosition(400.f, 280.f);
+                }
+                else if (questSystem.isAsteroidSpawned && sqrt(pow(questSystem.asteroidShape.getPosition().x - playerShip.getPosition().x, 2) + pow(questSystem.asteroidShape.getPosition().y - playerShip.getPosition().y, 2)) < 85) {
+                    activeState = state::LUDZIK;
+                    aktywneWnetrzeID = -2;
+                    playerCharacter.sprite.setPosition(500.f, 500.f);
               }
-
-              for (size_t i = 0; i < fractions.size(); ++i) {
-                sf::Vector2f diff =
-                    playerShip.getPosition() - fractions[i].getLocation();
-                float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
-                if (dist < fractions[i].interactionArea.getRadius()) {
-                  activeState = state::LUDZIK;
-                  aktywneWnetrzeID = i;
-                  playerCharacter.sprite.setPosition(530.f, 430.f);
-                  break;
+              else if (questSystem.isWreckSpawned && sqrt(pow(questSystem.wreckShape.getPosition().x - playerShip.getPosition().x, 2) + pow(questSystem.wreckShape.getPosition().y - playerShip.getPosition().y, 2)) < 85) {
+                    questSystem.currentQuest.objectiveComplete = true;
+              }
+              else
+              {
+                for (size_t i = 0; i < fractions.size(); ++i) {
+                    sf::Vector2f diff =
+                        playerShip.getPosition() - fractions[i].getLocation();
+                    float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+                    if (dist < fractions[i].interactionArea.getRadius()) {
+                    activeState = state::LUDZIK;
+                    aktywneWnetrzeID = i;
+                    playerCharacter.sprite.setPosition(500.f, 380.f);
+                    break;
+                    }
                 }
               }
             }
@@ -311,6 +334,8 @@ int main() {
               bool checwyjscia = false;
               if (aktywneWnetrzeID == -1)
                 checwyjscia = stacjaMap.checkExit(playerCharacter.sprite);
+              else if (aktywneWnetrzeID == -2)
+                checwyjscia = asteroidaMap.checkExit(playerCharacter.sprite);
               else
                 checwyjscia = planetyMaps[aktywneWnetrzeID].checkExit(
                     playerCharacter.sprite);
@@ -338,16 +363,16 @@ int main() {
             saveMode = !saveMode;
           }
         }
+        if (event.key.code == sf::Keyboard::J) {
+          if (!mapMode && !upgradeMode && !fractionsMode && !inventoryMode && !saveMode) {
+            questMode = !questMode;
+          }
+        }
         if (event.key.code == sf::Keyboard::Escape) {
             if (saveMode) saveMode = false;
             else if (upgradeMode) upgradeMode = false;
             else if (fractionsMode) fractionsMode = false;
             else if (inventoryMode) inventoryMode = false;
-        }
-        if (event.key.code == sf::Keyboard::U) {
-          if (!mapMode && !fractionsMode && !inventoryMode && !saveMode) {
-            upgradeMode = !upgradeMode;
-          }
         }
         if (event.key.code == sf::Keyboard::F) {
           if (!mapMode && !upgradeMode && !inventoryMode) {
@@ -368,6 +393,9 @@ int main() {
           }
           if (inventoryMode) {
             inventoryMode = false;
+          }
+          if (questMode) {
+            questMode = false;
           }
         }
         if (upgradeMode) {
@@ -396,6 +424,8 @@ int main() {
       activeState = state::DEATH;
     }
 
+    questSystem.update(dt);
+
     if (activeState == state::MENU) {
       sf::Vector2f mousePosScreen =
           window.mapPixelToCoords(mousePosition, window.getDefaultView());
@@ -405,7 +435,7 @@ int main() {
           bool loaded = SaveSystem::loadGame(filename, playerShip, fractions, enemies);
           if (!loaded) {
               std::cout << "Blad wczytywania slota: " << slot << std::endl;
-              // Revert to menu if failed
+
               activeState = state::MENU;
           }
       }
@@ -455,6 +485,9 @@ int main() {
     }
     if (inventoryMode) {
       inventoryMenu.update(playerShip);
+    }
+    if (questMode) {
+      questMenu.update(questSystem, fractions);
     }
     if (saveMode) {
         sf::Vector2f mousePosScreen = window.mapPixelToCoords(mousePosition, window.getDefaultView());
@@ -559,6 +592,13 @@ int main() {
       }
     }
 
+    for (auto &enemy : enemies) {
+        if (enemy.hp <= 0 && enemy.isQuestTarget) {
+            questSystem.registerKill();
+            enemy.isQuestTarget = false;
+        }
+    }
+
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
                                  [](const Enemy &e) { return !e.active; }),
                   enemies.end());
@@ -612,113 +652,104 @@ int main() {
     }
 
     window.clear();
-
     window.setView(camera);
 
     if (activeState == state::STATEK) {
       window.draw(background);
 
-      window.draw(playerShip.sprite);
-
       window.draw(station);
       window.draw(dockingmodule_area);
 
-      // Rysowanie planet, obszarow interakcji oraz nazwy frakcji
       for (auto &fraction : fractions) {
         window.draw(fraction.planetShape);
         window.draw(fraction.interactionArea);
         window.draw(fraction.nameText);
       }
 
-      // Rysowanie wrogów
+      questSystem.drawSpaceObjects(window);
+
       for (auto &enemy : enemies)
         enemy.draw(window);
 
-      // Rysowanie min
+
       for (auto &m : playerShip.mines) {
-        if (!m.exploded)
-          window.draw(m.shape);
-        else
-          window.draw(m.blastShape);
+        if (!m.exploded) window.draw(m.shape);
+        else window.draw(m.blastShape);
       }
+      for (auto &p : playerShip.projectiles) window.draw(p.shape);
 
-      // Rysowanie pocisków
-      for (auto &p : playerShip.projectiles) {
-        window.draw(p.shape);
-      }
 
-      // Rysowanie statku i jego tarczy
       window.draw(playerShip.sprite);
       if (playerShip.getCurrentShield() > 0) {
         window.draw(playerShip.shieldShape);
       }
 
-      ////rysowanie pocisków wrogow
       for (auto &m : enemyMines) {
-        if (!m.exploded)
-          window.draw(m.shape);
-        else
-          window.draw(m.blastShape);
+        if (!m.exploded) window.draw(m.shape);
+        else window.draw(m.blastShape);
       }
-      for (auto &p : enemyProjectiles) {
-        window.draw(p.shape);
-      }
+      for (auto &p : enemyProjectiles) window.draw(p.shape);
 
-      for (auto &ex : explosions) {
-        ex.draw(window);
-      }
-
-      window.setView(window.getDefaultView());
-
-      if (mapMode) {
-        window.draw(mapBorder);
-        window.draw(mapText);
-      } else {
-        healthBar.draw(window);
-        nitroBar.draw(window);
-        shieldBar.draw(window);
-        inventoryBar.draw(window);
-
-        if (upgradeMode) {
-          upgradeMenu.draw(window);
-        }
-        if (fractionsMode) {
-          fractionsMenu.draw(window);
-        }
-        if (inventoryMode) {
-          inventoryMenu.draw(window);
-        }
-        if (saveMode) {
-          saveMenu.draw(window);
-        }
-      }
+      for (auto &ex : explosions) ex.draw(window);
 
     }
-
     else if (activeState == state::LUDZIK) {
       window.clear(sf::Color(25, 27, 33));
 
       if (aktywneWnetrzeID == -1) {
         stacjaMap.draw(window);
-      } else {
+        stacjaMap.checkNPCInteractions(playerCharacter.sprite, window, font, questSystem, aktywneWnetrzeID, playerShip, fractions, enemies, upgradeMode);
+      }
+      else if (aktywneWnetrzeID == -2) {
+        asteroidaMap.draw(window);
+      }
+      else {
         planetyMaps[aktywneWnetrzeID].draw(window);
+        planetyMaps[aktywneWnetrzeID].checkNPCInteractions(playerCharacter.sprite, window, font, questSystem, aktywneWnetrzeID, playerShip, fractions, enemies, upgradeMode);
       }
       window.draw(playerCharacter.sprite);
     }
 
-    if (activeState == state::MENU) {
-      window.clear(sf::Color(15, 15, 20));
-      window.setView(window.getDefaultView());
-      mainMenu.draw(window);
-    } else if (activeState == state::DEATH) {
-      window.clear();
-      window.setView(window.getDefaultView());
-      window.draw(deathBackgroundShape);
-      window.draw(deathText);
-      window.draw(returnMenuText);
-    }
+    window.setView(window.getDefaultView());
 
+    if (activeState == state::STATEK) {
+        if (mapMode) {
+            questSystem.drawMapMarkers(window, font, fractions);
+            window.draw(mapBorder);
+            window.draw(mapText);
+            questSystem.drawMapMarkers(window, font, fractions);
+        } else {
+            healthBar.draw(window);
+            nitroBar.draw(window);
+            shieldBar.draw(window);
+            inventoryBar.draw(window);
+
+            if (upgradeMode) upgradeMenu.draw(window);
+            if (fractionsMode) fractionsMenu.draw(window);
+            if (inventoryMode) inventoryMenu.draw(window);
+            if (saveMode) saveMenu.draw(window);
+            if (questMode) questMenu.draw(window);
+        }
+    }
+    else if (activeState == state::LUDZIK) {
+        inventoryBar.draw(window);
+        if (inventoryMode) inventoryMenu.draw(window);
+        if (saveMode) saveMenu.draw(window);
+        if (questMode) questMenu.draw(window);
+        if (upgradeMode) upgradeMenu.draw(window);
+    }
+    else if (activeState == state::MENU) {
+        window.clear(sf::Color(15, 15, 20));
+        mainMenu.draw(window);
+    }
+    else if (activeState == state::DEATH) {
+        window.clear();
+        window.draw(deathBackgroundShape);
+        window.draw(deathText);
+        window.draw(returnMenuText);
+    }
     window.setView(camera);
+
     window.display();
   }
 

@@ -1,5 +1,5 @@
-#include "Enemy.h"
-#include "Textures.h"
+#include "../include/Enemy.h"
+#include "../include/Textures.h"
 
 Enemy::Enemy(EnemyType t, sf::Vector2f pos) {
   type = t;

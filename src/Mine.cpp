@@ -1,5 +1,5 @@
-#include "Mine.h"
-#include "Textures.h"
+#include "../include/Mine.h"
+#include "../include/Textures.h"
 
 Mine::Mine(sf::Vector2f pos, float dmg, float radius) {
   maxTimer = 3.0f;
@@ -39,7 +39,7 @@ void Mine::update(float dt) {
     }
   } else {
     explosionLinger -= dt;
-    
+
     // Znika plynnie
     sf::Uint8 alpha = static_cast<sf::Uint8>(255 * (explosionLinger / 0.5f));
     blastShape.setColor(sf::Color(255, 255, 255, alpha));

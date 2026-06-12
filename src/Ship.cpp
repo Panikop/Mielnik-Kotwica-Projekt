@@ -1,5 +1,5 @@
-#include "Ship.h"
-#include "Textures.h"
+#include "../include/Ship.h"
+#include "../include/Textures.h"
 
 void Ship::createShip() {
   sprite.setTexture(Textures::shipTex);

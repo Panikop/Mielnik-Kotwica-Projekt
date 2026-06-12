@@ -39,4 +39,6 @@ public:
     void update(float dt, std::vector<Projectile>& outProjectiles, std::vector<Mine>& outMines);
     bool takeDamage(float damage);
     void draw(sf::RenderWindow& window);
+
+    bool isQuestTarget = false;
 };

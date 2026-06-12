@@ -1,5 +1,5 @@
 
-#include "fraction.h"
+#include "../include/fraction.h"
 
 Fraction::Fraction()
     : name("Unknown"), location(0.f, 0.f), trustLevel(0) {}

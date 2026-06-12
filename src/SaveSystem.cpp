@@ -1,4 +1,4 @@
-#include "SaveSystem.h"
+#include "../include/SaveSystem.h"
 #include <fstream>
 #include <iostream>
 
@@ -48,7 +48,7 @@ bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<F
     }
 
     std::string header;
-    
+
     // --- SHIP STATE ---
     in >> header; // Oczekiwane [SHIP]
     if (header != "[SHIP]") return false;
@@ -92,7 +92,7 @@ bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<F
             float ex, ey, ehp, eshield;
             bool eactive;
             in >> typeInt >> ex >> ey >> ehp >> eshield >> eactive;
-            
+
             EnemyType type = static_cast<EnemyType>(typeInt);
             Enemy e(type, sf::Vector2f(ex, ey));
             e.hp = ehp;

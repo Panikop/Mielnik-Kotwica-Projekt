@@ -1,4 +1,4 @@
-#include "mainmenu.h"
+#include "../include/mainmenu.h"
 #include <iostream>
 
 MainMenu::MainMenu(sf::Vector2f resolution, sf::Font &font)

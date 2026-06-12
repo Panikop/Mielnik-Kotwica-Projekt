@@ -1,4 +1,4 @@
-#include "UIInventoryBar.h"
+#include "../include/UIInventoryBar.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
