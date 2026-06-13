@@ -19,8 +19,10 @@ private:
     float staminaRechargeRate = 2;
     bool staminaOnCooldown = false;
 
-    float playerSpeed = 100;
+    float playerSpeed = 250;
     float movementMultiplier = 1;
+    float walkTimer = 0.f;
+    int currentFrame = 0;
 
 
 public:

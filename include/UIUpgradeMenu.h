@@ -12,7 +12,7 @@ private:
 
     sf::Text m_titleText;
     sf::Text m_scrapsText;
-    sf::Text m_upgradesText[4];
+    sf::Text m_upgradesText[5];
     sf::Text m_instructionsText;
 
     sf::Font m_font;

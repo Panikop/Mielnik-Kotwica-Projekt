@@ -8,7 +8,8 @@
 enum class EnemyType {
     BASIC_SHIELDED, // Stojacy z odnawiajaca sie tarcza
     SHOOTER,        // Stojacy, strzelajacy przed siebie
-    MINER           // Latajacy w kolko, zrzucajacy miny
+    MINER,          // Latajacy w kolko, zrzucajacy miny
+    CHASER          // Latajacy za graczem i strzelajacy
 };
 
 class Enemy {
@@ -36,7 +37,7 @@ public:
     float mineCooldown;
 
     Enemy(EnemyType t, sf::Vector2f pos);
-    void update(float dt, std::vector<Projectile>& outProjectiles, std::vector<Mine>& outMines);
+    void update(float dt, sf::Vector2f playerPos, std::vector<Projectile>& outProjectiles, std::vector<Mine>& outMines);
     bool takeDamage(float damage);
     void draw(sf::RenderWindow& window);
 

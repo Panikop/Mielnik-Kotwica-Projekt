@@ -59,7 +59,10 @@ bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<F
 
     in >> ship.current_health >> ship.max_health >> ship.healthUpgradeLevel;
     in >> ship.current_nitro >> ship.max_nitro >> ship.nitroUpgradeLevel;
+    ship.nitroRechargeRate = 1.0f + (ship.nitroUpgradeLevel * 0.5f);
+    
     in >> ship.current_shield >> ship.max_shield >> ship.shieldUpgradeLevel;
+    ship.shieldRechargeRate = 5.0f + (ship.shieldUpgradeLevel * 2.0f);
     in >> ship.shipSpeed >> ship.speedUpgradeLevel;
     in >> ship.cannonDamage >> ship.cannonUpgradeLevel;
     in >> ship.mineDamage >> ship.mineRadius >> ship.mineUpgradeLevel;

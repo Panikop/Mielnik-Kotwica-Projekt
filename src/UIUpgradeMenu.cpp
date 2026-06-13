@@ -43,7 +43,7 @@ UIUpgradeMenu::UIUpgradeMenu(sf::Vector2f resolution, const sf::Font &font)
   m_scrapsText.setOutlineThickness(1.f);
 
   // Opcje ulepszeń
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 5; ++i) {
     m_upgradesText[i].setFont(m_font);
     m_upgradesText[i].setCharacterSize(15);
     m_upgradesText[i].setStyle(sf::Text::Bold);
@@ -53,7 +53,7 @@ UIUpgradeMenu::UIUpgradeMenu(sf::Vector2f resolution, const sf::Font &font)
 
   // Instrukcja sterowania
   m_instructionsText.setFont(m_font);
-  m_instructionsText.setString("Nacisnij klawisz [1-4] aby kupic ulepszenie  | "
+  m_instructionsText.setString("Nacisnij klawisz [1-5] aby kupic ulepszenie  | "
                                " Nacisnij [U] lub [Esc] aby zamknac");
   m_instructionsText.setCharacterSize(13);
   m_instructionsText.setFillColor(sf::Color(150, 160, 175));
@@ -79,39 +79,40 @@ void UIUpgradeMenu::update(Ship &ship) {
   m_scrapsText.setString(ss.str());
   centerTextX(m_scrapsText, m_position.y + 80.f);
 
-  int lvlHP = ship.getHealthUpgradeLevel();
+  int lvlShield = ship.getShieldUpgradeLevel();
   int lvlNitro = ship.getNitroUpgradeLevel();
   int lvlStorage = ship.getStorageUpgradeLevel();
   int lvlSpeed = ship.getSpeedUpgradeLevel();
 
-  sf::Vector3f costHP = ship.getHealthUpgradeCost();
+  sf::Vector3f costShield = ship.getShieldUpgradeCost();
   sf::Vector3f costNitro = ship.getNitroUpgradeCost();
   sf::Vector3f costStorage = ship.getStorageUpgradeCost();
   sf::Vector3f costSpeed = ship.getSpeedUpgradeCost();
 
-  float maxHP = ship.getMaxHealth();
+  float maxShield = ship.getMaxShield();
   float maxNitro = ship.getMaxNitro();
   float maxCargo = ship.getMaxScrap();
   float speed = ship.getShipSpeed();
 
-  std::string names[4] = {"[1] Maks. Zdrowie (HP)", "[2] Maks. Nitro (Boost)",
-                          "[3] Pojemnosc Cargo", "[4] Predkosc Silnika"};
+  std::string names[5] = {"[1] Maks. Tarcza (Shield)", "[2] Maks. Nitro (Boost)",
+                          "[3] Pojemnosc Cargo", "[4] Predkosc Silnika", "[5] Naprawa Statku (+50 HP)"};
 
-  std::stringstream valSS[4];
-  valSS[0] << maxHP << " -> " << (maxHP + 25) << "  (Poziom " << lvlHP << ")";
+  std::stringstream valSS[5];
+  valSS[0] << maxShield << " -> " << (maxShield + 25) << "  (Poziom " << lvlShield << ")";
   valSS[1] << maxNitro << " -> " << (maxNitro + 15) << "  (Poziom " << lvlNitro
            << ")";
   valSS[2] << maxCargo << " -> " << (maxCargo + 50) << "  (Poziom "
            << lvlStorage << ")";
   valSS[3] << speed << " -> " << (speed + 30) << "  (Poziom " << lvlSpeed
            << ")";
+  valSS[4] << ship.getCurrentHealth() << " / " << ship.getMaxHealth();
 
-  sf::Vector3f costs[4] = {costHP, costNitro, costStorage, costSpeed};
+  sf::Vector3f costs[5] = {costShield, costNitro, costStorage, costSpeed, sf::Vector3f(25.f, 0.f, 0.f)};
 
   int curElec = static_cast<int>(ship.getCurrentElectronics());
   int curRare = static_cast<int>(ship.getCurrentRareMetals());
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 5; ++i) {
     std::stringstream rowSS;
     rowSS << names[i] << ":  " << valSS[i].str()
           << "\nKoszt: " << static_cast<int>(costs[i].x) << " Zlom | "
@@ -119,8 +120,12 @@ void UIUpgradeMenu::update(Ship &ship) {
           << static_cast<int>(costs[i].z) << " Rzad. Met.";
     m_upgradesText[i].setString(rowSS.str());
 
-    if (currentScraps >= costs[i].x && curElec >= costs[i].y &&
-        curRare >= costs[i].z) {
+    bool canAfford = (currentScraps >= costs[i].x && curElec >= costs[i].y && curRare >= costs[i].z);
+    if (i == 4 && ship.getCurrentHealth() >= ship.getMaxHealth()) {
+        canAfford = false; // Cannot heal if already full HP
+    }
+
+    if (canAfford) {
       m_upgradesText[i].setFillColor(
           sf::Color(100, 255, 100)); // Zielony - dostepny
     } else {
@@ -128,7 +133,7 @@ void UIUpgradeMenu::update(Ship &ship) {
           sf::Color(255, 100, 100)); // Czerwony - niedostepny
     }
 
-    centerTextX(m_upgradesText[i], m_position.y + 125.f + i * 75.f);
+    centerTextX(m_upgradesText[i], m_position.y + 115.f + i * 65.f);
   }
 }
 
@@ -138,7 +143,7 @@ void UIUpgradeMenu::draw(sf::RenderWindow &window) {
   window.draw(m_titleText);
   window.draw(m_scrapsText);
 
-  for (int i = 0; i < 4; ++i) {
+  for (int i = 0; i < 5; ++i) {
     window.draw(m_upgradesText[i]);
   }
 

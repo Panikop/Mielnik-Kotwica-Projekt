@@ -5,6 +5,7 @@
 #include "Ship.h"
 #include "fraction.h"
 #include "Enemy.h"
+#include "AppearingText.h"
 
 enum class QuestType { CARGO, VIP, KILL, ASTEROID, INVESTIGATE };
 enum class RewardType { SCRAP, ELECTRONICS, RARE_METALS };
@@ -38,6 +39,7 @@ struct Quest {
 
 class QuestSystem {
 public:
+    std::string newlyAcceptedQuestTitle;
     std::vector<Quest> availableQuests;
     Quest currentQuest;
 
@@ -54,8 +56,11 @@ public:
     std::string tryInteract(const std::string& npcName, int mapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& globalEnemies);
 
     void update(float dt);
-    void drawSpaceObjects(sf::RenderWindow& window);
+    void drawSpaceObjects(sf::RenderWindow& window, const sf::Vector2f& playerPos, const sf::Font& font, const std::vector<Fraction>& fractions);
+    void drawNavigationHUD(sf::RenderWindow& window, const sf::Vector2f& playerPos, const sf::Font& font, const std::vector<Fraction>& fractions);
     void drawMapMarkers(sf::RenderWindow& window, const sf::Font& font, const std::vector<Fraction>& fractions);
+
+    sf::Vector2f getCurrentTargetPos(const std::vector<Fraction>& fractions);
 
     void registerKill();
     void registerItemCollected();

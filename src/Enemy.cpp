@@ -47,10 +47,17 @@ Enemy::Enemy(EnemyType t, sf::Vector2f pos) {
     flySpeed = 1.5f;
     mineCooldown = 2.5f;
     mineTimer = mineCooldown;
+  } else if (type == EnemyType::CHASER) {
+    hp = 90.f;
+    maxHp = 90.f;
+    shape.setColor(sf::Color::Red); // Czerwony
+    flySpeed = 150.f;
+    shootCooldown = 1.2f;
+    shootTimer = shootCooldown;
   }
 }
 
-void Enemy::update(float dt, std::vector<Projectile> &outProjectiles,
+void Enemy::update(float dt, sf::Vector2f playerPos, std::vector<Projectile> &outProjectiles,
                    std::vector<Mine> &outMines) {
   if (!active)
     return;
@@ -83,6 +90,27 @@ void Enemy::update(float dt, std::vector<Projectile> &outProjectiles,
     if (mineTimer <= 0) {
       mineTimer = mineCooldown;
       outMines.push_back(Mine(shape.getPosition(), 30.f, 80.f));
+    }
+  } else if (type == EnemyType::CHASER) {
+    sf::Vector2f diff = playerPos - shape.getPosition();
+    float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
+    if (dist > 0.f) {
+      sf::Vector2f dir = diff / dist;
+      if (dist > 150.f) { // Stop a bit away from the player
+        shape.move(dir * flySpeed * dt);
+      }
+      
+      float angleDeg = atan2(dir.y, dir.x) * 180.f / M_PI;
+      shape.setRotation(angleDeg);
+
+      if (dist < 600.f) {
+        shootTimer -= dt;
+        if (shootTimer <= 0) {
+          shootTimer = shootCooldown;
+          outProjectiles.push_back(Projectile(shape.getPosition(), dir, 500.f,
+                                              15.f, sf::Color::Red));
+        }
+      }
     }
   }
 }

@@ -12,7 +12,8 @@ MENU,
 STATEK,
 LUDZIK,
 ANIMACJA,
-DEATH
+DEATH,
+WIN
 };
 
 
@@ -118,6 +119,7 @@ public:
     bool upgradeMaxNitro();
     bool upgradeMaxStorage();
     bool upgradeShipSpeed();
+    bool healShipWithScrap();
 
     std::vector<Projectile> projectiles;
     std::vector<Mine> mines;

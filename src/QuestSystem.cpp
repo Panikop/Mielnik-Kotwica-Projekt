@@ -1,6 +1,8 @@
 #include "../include/QuestSystem.h"
 #include <cstdlib>
-
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <iostream>
 QuestSystem::QuestSystem() {
     wreckShape.setRadius(40.f);
     wreckShape.setOrigin(40.f, 40.f);
@@ -57,6 +59,7 @@ void QuestSystem::acceptQuest(int index, Ship& ship, std::vector<Enemy>& globalE
 
     currentQuest = chosen;
     currentQuest.active = true;
+    newlyAcceptedQuestTitle = currentQuest.title;
 
     if (currentQuest.type == QuestType::ASTEROID) {
         isAsteroidSpawned = true;
@@ -66,7 +69,7 @@ void QuestSystem::acceptQuest(int index, Ship& ship, std::vector<Enemy>& globalE
         wreckShape.setPosition(currentQuest.targetPos);
     } else if (currentQuest.type == QuestType::KILL) {
         for (int i = 0; i < currentQuest.requiredKills; ++i) {
-            Enemy e(EnemyType::SHOOTER, currentQuest.targetPos + sf::Vector2f(i * 100.f, i * 100.f));
+            Enemy e(EnemyType::CHASER, currentQuest.targetPos + sf::Vector2f(i * 100.f, i * 100.f));
             e.isQuestTarget = true;
             globalEnemies.push_back(e);
         }
@@ -116,9 +119,92 @@ void QuestSystem::update(float dt) {
     }
 }
 
-void QuestSystem::drawSpaceObjects(sf::RenderWindow& window) {
+sf::Vector2f QuestSystem::getCurrentTargetPos(const std::vector<Fraction>& fractions) {
+    if (!currentQuest.active) return sf::Vector2f(0, 0);
+
+    if (currentQuest.objectiveComplete) {
+        if (currentQuest.type == QuestType::CARGO || currentQuest.type == QuestType::VIP) {
+            if (currentQuest.destMapID >= 0 && currentQuest.destMapID < fractions.size())
+                return fractions[currentQuest.destMapID].getLocation();
+        } else {
+            if (currentQuest.giverMapID == -1) {
+                return sf::Vector2f(1000.f, 356.f); // Docking area of station
+            } else if (currentQuest.giverMapID >= 0 && currentQuest.giverMapID < fractions.size()) {
+                return fractions[currentQuest.giverMapID].getLocation();
+            }
+        }
+    } else {
+        if (currentQuest.type == QuestType::CARGO || currentQuest.type == QuestType::VIP) {
+            if (currentQuest.destMapID >= 0 && currentQuest.destMapID < fractions.size())
+                return fractions[currentQuest.destMapID].getLocation();
+        } else {
+            return currentQuest.searchArea;
+        }
+    }
+    return sf::Vector2f(1000.f, 356.f);
+}
+
+void QuestSystem::drawSpaceObjects(sf::RenderWindow& window, const sf::Vector2f& playerPos, const sf::Font& font, const std::vector<Fraction>& fractions) {
     if (isAsteroidSpawned) window.draw(asteroidShape);
     if (isWreckSpawned) window.draw(wreckShape);
+}
+
+void QuestSystem::drawNavigationHUD(sf::RenderWindow& window, const sf::Vector2f& playerPos, const sf::Font& font, const std::vector<Fraction>& fractions) {
+    if (!currentQuest.active) return;
+
+    sf::Vector2f targetPos = getCurrentTargetPos(fractions);
+    sf::Vector2f diff = targetPos - playerPos;
+    float distance = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+
+    if (distance < 500.f) return; // Hide arrow if close
+
+    sf::View view = window.getView();
+    sf::Vector2f viewCenter = view.getCenter();
+    sf::Vector2f viewSize = view.getSize();
+
+    float angle = std::atan2(diff.y, diff.x);
+
+    sf::ConvexShape arrow;
+    arrow.setPointCount(3);
+    arrow.setPoint(0, sf::Vector2f(20.f, 0.f));
+    arrow.setPoint(1, sf::Vector2f(-15.f, 15.f));
+    arrow.setPoint(2, sf::Vector2f(-15.f, -15.f));
+    arrow.setFillColor(sf::Color(255, 200, 0, 200));
+
+    // For rectangle bounds, limit to the shorter aspect
+    // We trace a ray to the edge of an inset rectangle
+    float padding = 80.f;
+    float halfW = viewSize.x / 2.f - padding;
+    float halfH = viewSize.y / 2.f - padding;
+
+    float edgeX, edgeY;
+    
+    float tanAngle = std::tan(angle);
+    if (std::abs(tanAngle) < halfH / halfW) {
+        // Intersects left or right edge
+        edgeX = (diff.x > 0) ? halfW : -halfW;
+        edgeY = edgeX * tanAngle;
+    } else {
+        // Intersects top or bottom edge
+        edgeY = (diff.y > 0) ? halfH : -halfH;
+        edgeX = edgeY / tanAngle;
+    }
+
+    arrow.setPosition(viewCenter.x + edgeX, viewCenter.y + edgeY);
+    arrow.setRotation(angle * 180.f / M_PI);
+
+    sf::Text distText;
+    distText.setFont(font);
+    distText.setCharacterSize(20);
+    distText.setFillColor(sf::Color::Yellow);
+    distText.setString(std::to_string((int)distance) + "m");
+    distText.setOrigin(distText.getLocalBounds().width / 2.f, distText.getLocalBounds().height / 2.f);
+    
+    // Draw text slightly closer to center
+    distText.setPosition(viewCenter.x + edgeX * 0.85f, viewCenter.y + edgeY * 0.85f);
+
+    window.draw(arrow);
+    window.draw(distText);
 }
 
 void QuestSystem::drawMapMarkers(sf::RenderWindow& window, const sf::Font& font, const std::vector<Fraction>& fractions) {

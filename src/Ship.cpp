@@ -2,10 +2,10 @@
 #include "../include/Textures.h"
 
 void Ship::createShip() {
-  sprite.setTexture(Textures::shipTex);
-  sprite.setTextureRect(sf::IntRect(0, 0, 64, 64));
-  sprite.setOrigin(32.f, 32.f);
-  sprite.setScale(0.8f, 0.8f); // 64 * 0.8 = ~51 size
+  sprite.setTexture(Textures::shipAnimTex);
+  sprite.setTextureRect(sf::IntRect(0, 0, 280, 350));
+  sprite.setOrigin(140.f, 175.f);
+  sprite.setScale(0.18f, 0.18f); // 350 * 0.18 = ~63 size
   velocity.x = 0;
   velocity.y = 0;
 
@@ -39,24 +39,41 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition,
   // KIERUNEK I MNOĹ»NIK
   movementMultiplier = Ship::calculateMovementMultiplier();
   sf::Vector2f movement(0, 0);
+  int animFrame = 0; // 0=Idle, 1=Forward(W), 2=Backward(S), 3=Left(A), 4=Right(D)
+  
   if (activeState == state::STATEK) {
+
+    bool flipped = false;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
       movement.x += direction.x;
       movement.y += direction.y;
+      animFrame = 1;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
       movement.x -= direction.x;
       movement.y -= direction.y;
+      animFrame = 2;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
       movement.x -= right.x;
       movement.y -= right.y;
+      animFrame = 3;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
       movement.x += right.x;
       movement.y += right.y;
+      animFrame = 3; // uzyjmy klatki dla A
+      flipped = true; // i odwrocmy sprite
     }
+    
+    if (flipped) {
+      sprite.setScale(-0.18f, 0.18f);
+    } else {
+      sprite.setScale(0.18f, 0.18f);
+    }
+    
+    sprite.setTextureRect(sf::IntRect(animFrame * 280, 0, 280, 350));
 
     // BOOST
 
@@ -90,9 +107,6 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition,
   if (length != 0) {
     movement /= length;
     sprite.move(movement * shipSpeed * movementMultiplier * dt);
-    sprite.setTextureRect(sf::IntRect(64, 0, 64, 64));
-  } else {
-    sprite.setTextureRect(sf::IntRect(0, 0, 64, 64));
   }
   sprite.move(velocity);
 
@@ -223,6 +237,7 @@ bool Ship::upgradeMaxNitro() {
     nitroUpgradeLevel++;
     max_nitro += 15.f;
     current_nitro += 15.f;
+    nitroRechargeRate += 0.5f; // Zwiekszanie predkosci odnawiania
     return true;
   }
   return false;
@@ -251,6 +266,16 @@ bool Ship::upgradeShipSpeed() {
     current_rare_metals -= cost.z;
     speedUpgradeLevel++;
     shipSpeed += 30.f;
+    return true;
+  }
+  return false;
+}
+
+bool Ship::healShipWithScrap() {
+  if (current_scrap >= 25.f && current_health < max_health) {
+    current_scrap -= 25.f;
+    current_health += 50.f;
+    if (current_health > max_health) current_health = max_health;
     return true;
   }
   return false;
@@ -323,6 +348,7 @@ bool Ship::upgradeMaxShield() {
     shieldUpgradeLevel++;
     max_shield += 25.f;
     current_shield += 25.f;
+    shieldRechargeRate += 2.0f; // Zwiekszanie predkosci odnawiania
     return true;
   }
   return false;

@@ -1,4 +1,5 @@
 #include "../include/LocalMap.h"
+#include "../include/Textures.h"
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -41,9 +42,10 @@ void LocalMap::buildPlayerShipInterior(sf::Vector2f startPos, const sf::Font& fo
     walls.push_back(mainRightTopPiece); walls.push_back(mainRightBottomPiece);
     walls.push_back(engineLeftTop); walls.push_back(engineRightTop); walls.push_back(engineLeft); walls.push_back(engineRight); walls.push_back(engineBottom);
 
+    for (auto& w : walls) w.setTexture(&Textures::wallTex);
 
-    exitZone.setSize(sf::Vector2f(80.f, 60.f));
-    exitZone.setPosition(startPos.x - 40.f, startPos.y - 150.f);
+    exitZone.setSize(sf::Vector2f(100.f, 120.f));
+    exitZone.setPosition(startPos.x - 50.f, startPos.y - 160.f);
     exitZone.setFillColor(sf::Color(0, 255, 100, 100));
 
     exitText.setFont(font);
@@ -67,6 +69,13 @@ void LocalMap::generateStationMap(const sf::Font& font) {
 
     walls.push_back(topWall); walls.push_back(bottomWall); walls.push_back(leftWall); walls.push_back(rightWall);
 
+    for (auto& w : walls) w.setTexture(&Textures::wallTex);
+
+    floorShape.setSize(sf::Vector2f(2000.f, 2000.f));
+    floorShape.setPosition(-400.f, -400.f);
+    floorShape.setTexture(&Textures::floorTex);
+    floorShape.setTextureRect(sf::IntRect(0, 0, 2000, 2000));
+
     npcs.push_back(LocalNPC(sf::Vector2f(800.f, 200.f), "Mechanik", "Zrobie ci maszyne.", font));
     npcs.push_back(LocalNPC(sf::Vector2f(600.f, 500.f), "Zleceniodawca", "Mamy robote.", font));
 
@@ -82,8 +91,22 @@ void LocalMap::generatePlanetMap(std::string name, sf::Color groundColor, const 
     sf::RectangleShape rock1(sf::Vector2f(200.f, 50.f)); rock1.setPosition(200.f, 200.f); rock1.setFillColor(groundColor);
     sf::RectangleShape rock2(sf::Vector2f(50.f, 300.f)); rock2.setPosition(800.f, 300.f); rock2.setFillColor(groundColor);
 
+    sf::RectangleShape topWall(sf::Vector2f(1200.f, 20.f)); topWall.setPosition(0.f, 0.f); topWall.setFillColor(groundColor);
+    sf::RectangleShape bottomWall(sf::Vector2f(1200.f, 20.f)); bottomWall.setPosition(0.f, 800.f); bottomWall.setFillColor(groundColor);
+    sf::RectangleShape leftWall(sf::Vector2f(20.f, 820.f)); leftWall.setPosition(0.f, 0.f); leftWall.setFillColor(groundColor);
+    sf::RectangleShape rightWall(sf::Vector2f(20.f, 820.f)); rightWall.setPosition(1180.f, 0.f); rightWall.setFillColor(groundColor);
+
     walls.push_back(rock1);
     walls.push_back(rock2);
+    walls.push_back(topWall); walls.push_back(bottomWall); walls.push_back(leftWall); walls.push_back(rightWall);
+
+    for (auto& w : walls) w.setTexture(&Textures::wallTex);
+
+    floorShape.setSize(sf::Vector2f(2000.f, 2000.f));
+    floorShape.setPosition(-500.f, -500.f);
+    floorShape.setTexture(&Textures::floorTex);
+    floorShape.setTextureRect(sf::IntRect(0, 0, 2000, 2000));
+    floorShape.setFillColor(groundColor); // Blend with ground color
 
     npcs.push_back(LocalNPC(sf::Vector2f(500.f, 200.f), "Gubernator", "Witaj u nas.", font));
     npcs.push_back(LocalNPC(sf::Vector2f(700.f, 400.f), "Mieszkaniec", "Spokojnie tutaj dzis.", font));
@@ -199,6 +222,7 @@ bool LocalMap::checkExit(sf::Sprite& playerSprite) {
 }
 
 void LocalMap::draw(sf::RenderWindow& window) {
+    window.draw(floorShape);
 
     window.draw(exitZone);
     window.draw(exitText);
@@ -220,7 +244,22 @@ void LocalMap::generateAsteroidMap(const sf::Font& font) {
     buildPlayerShipInterior(sf::Vector2f(500.f, 500.f), font);
 
     sf::RectangleShape rock(sf::Vector2f(200.f, 200.f)); rock.setPosition(200.f, 200.f); rock.setFillColor(sf::Color(100, 100, 100));
+    
+    sf::RectangleShape topWall(sf::Vector2f(1200.f, 20.f)); topWall.setPosition(0.f, 0.f); topWall.setFillColor(sf::Color(100, 100, 100));
+    sf::RectangleShape bottomWall(sf::Vector2f(1200.f, 20.f)); bottomWall.setPosition(0.f, 800.f); bottomWall.setFillColor(sf::Color(100, 100, 100));
+    sf::RectangleShape leftWall(sf::Vector2f(20.f, 820.f)); leftWall.setPosition(0.f, 0.f); leftWall.setFillColor(sf::Color(100, 100, 100));
+    sf::RectangleShape rightWall(sf::Vector2f(20.f, 820.f)); rightWall.setPosition(1180.f, 0.f); rightWall.setFillColor(sf::Color(100, 100, 100));
+
     walls.push_back(rock);
+    walls.push_back(topWall); walls.push_back(bottomWall); walls.push_back(leftWall); walls.push_back(rightWall);
+
+    for (auto& w : walls) w.setTexture(&Textures::wallTex);
+
+    floorShape.setSize(sf::Vector2f(2000.f, 2000.f));
+    floorShape.setPosition(-500.f, -500.f);
+    floorShape.setTexture(&Textures::floorTex);
+    floorShape.setTextureRect(sf::IntRect(0, 0, 2000, 2000));
+    floorShape.setFillColor(sf::Color(100, 100, 100)); // Darken the asteroid floor
 
     resources.push_back(LocalResource(sf::Vector2f(800.f, 300.f), 1, true));
 }

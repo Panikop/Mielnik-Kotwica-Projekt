@@ -11,6 +11,7 @@ class LocalMap {
 public:
     std::string mapName;
     std::vector<sf::RectangleShape> walls;
+    sf::RectangleShape floorShape;
     std::vector<LocalNPC> npcs;
     std::vector<LocalResource> resources;
 
