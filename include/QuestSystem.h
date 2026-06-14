@@ -52,8 +52,8 @@ public:
     QuestSystem();
     void generateAvailableQuests(const std::vector<Fraction>& fractions);
 
-    void acceptQuest(int index, Ship& ship, std::vector<Enemy>& globalEnemies);
-    std::string tryInteract(const std::string& npcName, int mapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& globalEnemies);
+    void acceptQuest(int index, Ship& ship, std::vector<std::unique_ptr<GameObject>>& globalObjects);
+    std::string tryInteract(const std::string& npcName, int mapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<std::unique_ptr<GameObject>>& globalObjects);
 
     void update(float dt);
     void drawSpaceObjects(sf::RenderWindow& window, const sf::Vector2f& playerPos, const sf::Font& font, const std::vector<Fraction>& fractions);

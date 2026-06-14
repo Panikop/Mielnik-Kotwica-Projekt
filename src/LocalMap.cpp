@@ -44,6 +44,7 @@ void LocalMap::buildPlayerShipInterior(sf::Vector2f startPos, const sf::Font& fo
 
     for (auto& w : walls) w.setTexture(&Textures::wallTex);
 
+    // strefa wyjscia ze statku z powrotem do kosmosu
     exitZone.setSize(sf::Vector2f(100.f, 120.f));
     exitZone.setPosition(startPos.x - 50.f, startPos.y - 160.f);
     exitZone.setFillColor(sf::Color(0, 255, 100, 100));
@@ -76,11 +77,10 @@ void LocalMap::generateStationMap(const sf::Font& font) {
     floorShape.setTexture(&Textures::floorTex);
     floorShape.setTextureRect(sf::IntRect(0, 0, 2000, 2000));
 
+    //npc
     npcs.push_back(LocalNPC(sf::Vector2f(800.f, 200.f), "Mechanik", "Zrobie ci maszyne.", font));
     npcs.push_back(LocalNPC(sf::Vector2f(600.f, 500.f), "Zleceniodawca", "Mamy robote.", font));
 
-    resources.push_back(LocalResource(sf::Vector2f(150.f, 150.f), 15));
-    resources.push_back(LocalResource(sf::Vector2f(1000.f, 700.f), 25));
 }
 
 void LocalMap::generatePlanetMap(std::string name, sf::Color groundColor, const sf::Font& font) {
@@ -111,13 +111,10 @@ void LocalMap::generatePlanetMap(std::string name, sf::Color groundColor, const 
     npcs.push_back(LocalNPC(sf::Vector2f(500.f, 200.f), "Gubernator", "Witaj u nas.", font));
     npcs.push_back(LocalNPC(sf::Vector2f(700.f, 400.f), "Mieszkaniec", "Spokojnie tutaj dzis.", font));
 
-    resources.push_back(LocalResource(sf::Vector2f(250.f, 300.f), 40));
-    resources.push_back(LocalResource(sf::Vector2f(750.f, 250.f), 30));
-    resources.push_back(LocalResource(sf::Vector2f(400.f, 600.f), 50));
 }
 
 
-void LocalMap::checkNPCInteractions(sf::Sprite& playerSprite, sf::RenderWindow& window, const sf::Font& font, QuestSystem& qs, int currentMapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& globalEnemies, bool& openUpgrades) {
+void LocalMap::checkNPCInteractions(sf::Sprite& playerSprite, sf::RenderWindow& window, const sf::Font& font, QuestSystem& qs, int currentMapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<std::unique_ptr<GameObject>>& globalEnemies, bool& openUpgrades) {
     sf::Vector2f playerPos = playerSprite.getPosition();
 
     for (auto& npc : npcs) {
@@ -217,10 +214,14 @@ void LocalMap::updateCollisions(sf::Sprite& playerSprite, Ship& ship, QuestSyste
     }
 }
 
+
+//wyjscie
 bool LocalMap::checkExit(sf::Sprite& playerSprite) {
     return playerSprite.getGlobalBounds().intersects(exitZone.getGlobalBounds());
 }
 
+
+//rysowanie
 void LocalMap::draw(sf::RenderWindow& window) {
     window.draw(floorShape);
 
@@ -239,12 +240,13 @@ void LocalMap::draw(sf::RenderWindow& window) {
     }
 }
 
+//asteroida do zadania
 void LocalMap::generateAsteroidMap(const sf::Font& font) {
     mapName = "Zbadana Asteroida";
     buildPlayerShipInterior(sf::Vector2f(500.f, 500.f), font);
 
     sf::RectangleShape rock(sf::Vector2f(200.f, 200.f)); rock.setPosition(200.f, 200.f); rock.setFillColor(sf::Color(100, 100, 100));
-    
+
     sf::RectangleShape topWall(sf::Vector2f(1200.f, 20.f)); topWall.setPosition(0.f, 0.f); topWall.setFillColor(sf::Color(100, 100, 100));
     sf::RectangleShape bottomWall(sf::Vector2f(1200.f, 20.f)); bottomWall.setPosition(0.f, 800.f); bottomWall.setFillColor(sf::Color(100, 100, 100));
     sf::RectangleShape leftWall(sf::Vector2f(20.f, 820.f)); leftWall.setPosition(0.f, 0.f); leftWall.setFillColor(sf::Color(100, 100, 100));
@@ -259,7 +261,7 @@ void LocalMap::generateAsteroidMap(const sf::Font& font) {
     floorShape.setPosition(-500.f, -500.f);
     floorShape.setTexture(&Textures::floorTex);
     floorShape.setTextureRect(sf::IntRect(0, 0, 2000, 2000));
-    floorShape.setFillColor(sf::Color(100, 100, 100)); // Darken the asteroid floor
+    floorShape.setFillColor(sf::Color(100, 100, 100));
 
     resources.push_back(LocalResource(sf::Vector2f(800.f, 300.f), 1, true));
 }

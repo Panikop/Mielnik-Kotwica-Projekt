@@ -27,6 +27,6 @@ public:
     void draw(sf::RenderWindow& window);
 
     void buildPlayerShipInterior(sf::Vector2f startPos, const sf::Font& font);
-    void checkNPCInteractions(sf::Sprite& playerSprite, sf::RenderWindow& window, const sf::Font& font, QuestSystem& qs, int currentMapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& globalEnemies, bool& openUpgrades);
+    void checkNPCInteractions(sf::Sprite& playerSprite, sf::RenderWindow& window, const sf::Font& font, QuestSystem& qs, int currentMapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<std::unique_ptr<GameObject>>& globalObjects, bool& openUpgrades);
     void generateAsteroidMap(const sf::Font& font);
 };

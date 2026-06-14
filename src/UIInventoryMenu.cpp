@@ -20,7 +20,7 @@ UIInventoryMenu::UIInventoryMenu(sf::Vector2f resolution, const sf::Font &font)
   m_borderRect.setFillColor(sf::Color::Transparent);
   m_borderRect.setOutlineThickness(2.0f);
   m_borderRect.setOutlineColor(
-      sf::Color(138, 43, 226, 180)); // Purple outline for inventory
+      sf::Color(138, 43, 226, 180)); // fioletowa obramowka
 
   m_titleText.setFont(m_font);
   m_titleText.setString("INWENTARZ STATKU");

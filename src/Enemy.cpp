@@ -1,12 +1,15 @@
 #include "../include/Enemy.h"
 #include "../include/Textures.h"
+#include "../include/Projectile.h"
+#include "../include/Mine.h"
+#include "../include/GameObject.h"
 
 Enemy::Enemy(EnemyType t, sf::Vector2f pos) {
   type = t;
   active = true;
   shape.setTexture(Textures::ufoTex);
   shape.setOrigin(32.f, 32.f); // 64x64 sprite
-  shape.setScale(0.625f, 0.625f); // Make it 40x40
+  shape.setScale(0.625f, 0.625f); // skalowanie do 40x40
   shape.setPosition(pos);
 
   shield = 0;
@@ -18,6 +21,8 @@ Enemy::Enemy(EnemyType t, sf::Vector2f pos) {
   mineCooldown = 0;
   angle = 0;
 
+
+  //rozne typy i zachowania
   if (type == EnemyType::BASIC_SHIELDED) {
     hp = 100.f;
     maxHp = 100.f;
@@ -57,8 +62,9 @@ Enemy::Enemy(EnemyType t, sf::Vector2f pos) {
   }
 }
 
-void Enemy::update(float dt, sf::Vector2f playerPos, std::vector<Projectile> &outProjectiles,
-                   std::vector<Mine> &outMines) {
+
+//aktualizowanie
+void Enemy::update(float dt, sf::Vector2f playerPos) {
   if (!active)
     return;
 
@@ -74,11 +80,22 @@ void Enemy::update(float dt, sf::Vector2f playerPos, std::vector<Projectile> &ou
     shieldShape.setOutlineColor(sf::Color(
         255, 150, 0, static_cast<sf::Uint8>(100 * (shield / maxShield))));
   } else if (type == EnemyType::SHOOTER) {
-    shootTimer -= dt;
-    if (shootTimer <= 0) {
-      shootTimer = shootCooldown;
-      outProjectiles.push_back(Projectile(shape.getPosition(), aimDir, 400.f,
-                                          10.f, sf::Color::Yellow));
+    sf::Vector2f diff = playerPos - shape.getPosition();
+    float dist = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+
+    if (dist > 0.f) {
+      aimDir = diff / dist;
+
+      float angleDeg = std::atan2(aimDir.y, aimDir.x) * 180.f / M_PI;
+      shape.setRotation(angleDeg);
+
+      if (dist < 900.f) {
+        shootTimer -= dt;
+        if (shootTimer <= 0) {
+          shootTimer = shootCooldown;
+          pendingObjects.push_back(std::make_unique<Projectile>(shape.getPosition(), aimDir, 400.f, 10.f, sf::Color::Yellow));
+        }
+      }
     }
   } else if (type == EnemyType::MINER) {
     angle += flySpeed * dt;
@@ -89,17 +106,17 @@ void Enemy::update(float dt, sf::Vector2f playerPos, std::vector<Projectile> &ou
     mineTimer -= dt;
     if (mineTimer <= 0) {
       mineTimer = mineCooldown;
-      outMines.push_back(Mine(shape.getPosition(), 30.f, 80.f));
+      pendingObjects.push_back(std::make_unique<Mine>(shape.getPosition(), 30.f, 80.f));
     }
   } else if (type == EnemyType::CHASER) {
     sf::Vector2f diff = playerPos - shape.getPosition();
     float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
     if (dist > 0.f) {
       sf::Vector2f dir = diff / dist;
-      if (dist > 150.f) { // Stop a bit away from the player
+      if (dist > 150.f) {
         shape.move(dir * flySpeed * dt);
       }
-      
+
       float angleDeg = atan2(dir.y, dir.x) * 180.f / M_PI;
       shape.setRotation(angleDeg);
 
@@ -107,8 +124,7 @@ void Enemy::update(float dt, sf::Vector2f playerPos, std::vector<Projectile> &ou
         shootTimer -= dt;
         if (shootTimer <= 0) {
           shootTimer = shootCooldown;
-          outProjectiles.push_back(Projectile(shape.getPosition(), dir, 500.f,
-                                              15.f, sf::Color::Red));
+          pendingObjects.push_back(std::make_unique<Projectile>(shape.getPosition(), dir, 500.f, 15.f, sf::Color::Red));
         }
       }
     }
@@ -120,7 +136,7 @@ bool Enemy::takeDamage(float damage) {
   if (shield > 0) {
     shield -= damage;
     if (shield < 0) {
-      hp += shield;
+      hp += shield; // resztka obrazen przechodzi na hp
       shield = 0;
     }
   } else {
@@ -133,6 +149,7 @@ bool Enemy::takeDamage(float damage) {
   return false;
 }
 
+// rysowanie statku i tarczy
 void Enemy::draw(sf::RenderWindow &window) {
   if (!active)
     return;

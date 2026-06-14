@@ -16,9 +16,15 @@ Projectile::Projectile(sf::Vector2f startPos, sf::Vector2f direction,
   active = true;
 }
 
-void Projectile::update(float dt) {
+void Projectile::update(float dt, sf::Vector2f playerPos) {
   shape.move(velocity * dt);
   lifetime -= dt;
   if (lifetime <= 0)
     active = false;
+}
+
+void Projectile::draw(sf::RenderWindow& window) {
+    if (active) {
+        window.draw(shape);
+    }
 }

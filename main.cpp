@@ -26,6 +26,7 @@
 #include "include/UIQuestMenu.h"
 #include "include/AppearingText.h"
 #include "include/AppearingText.h"
+#include "include/GameObject.h"
 #include <vector>
 
 #define _USE_MATH_DEFINES
@@ -46,12 +47,16 @@ sf::Texture Textures::stationTex;
 sf::Texture Textures::wallTex;
 sf::Texture Textures::floorTex;
 
+// bufor na nowe obiekty
+std::vector<std::unique_ptr<GameObject>> pendingObjects;
+
 int main() {
   srand(time(NULL));
   Textures::load();
 
   float skala = 30;
 
+  // ustawienia glownego okna i kamer
   sf::Vector2f rozdzielczosc(1620, 820);
 
   sf::RenderWindow window(sf::VideoMode(rozdzielczosc.x, rozdzielczosc.y),
@@ -63,6 +68,7 @@ int main() {
 
   sf::Clock clock;
 
+  // ladowanie tla kosmosu
   sf::Texture space_background;
   space_background.loadFromFile("textures/kosmos_tlo.png");
   space_background.setRepeated(true);
@@ -76,6 +82,7 @@ int main() {
     cout << "Blad ladowania czcionki arial.ttf" << endl;
   }
 
+  // ustawienia paskow UI
 
   sf::Vector2f barSize(230.f, 28.f);
   float marginX = 12.f;
@@ -103,6 +110,7 @@ int main() {
                    rozdzielczosc.y - barSize.y - marginY - 3.f * spacingY),
       barSize, font);
 
+    //zarzadzanie aktywnym menu
   bool upgradeMode = false;
   UIUpgradeMenu upgradeMenu(rozdzielczosc, font);
 
@@ -122,12 +130,13 @@ int main() {
   sf::Vector2f mouseWorldPosition(0, 0);
 
   //////////////////////////////
+  // glowna stacja orbitalna
   sf::CircleShape station(256.f);
   station.setTexture(&Textures::stationTex);
   station.setFillColor(sf::Color::White);
   sf::Sprite mapSprite;
-  mapSprite.setTexture(Textures::stationTex); 
-  
+  mapSprite.setTexture(Textures::stationTex);
+
   AppearingText notificationText;
   notificationText.setFont(font);
   int previousHoveredID = -1;
@@ -155,6 +164,7 @@ int main() {
   state activeState = state::MENU;
   MainMenu mainMenu(rozdzielczosc, font);
 
+  // tlo i ekrany koncowe
   sf::Texture deathBackgroundTex;
   if (!deathBackgroundTex.loadFromFile("textures/menu_bg.png")) {
     cout << "Blad ladowania textures/menu_bg.png" << endl;
@@ -243,8 +253,9 @@ int main() {
   player playerCharacter;
   playerCharacter.createPlayer();
 
-  float ambushTimer = 15.f; // Reduced initial timer so it happens faster
+  float ambushTimer = 15.f;
 
+  //frakcje
   std::vector<Fraction> fractions;
   fractions.push_back(Fraction("Centari Alliance", -600.f, -400.f, 20));
   fractions.push_back(Fraction("Vectron Mining", 1500.f, -800.f, 20));
@@ -261,15 +272,7 @@ int main() {
                             sf::Color(220, 180, 50));
 
   ////////////////////////////////////////////// Walka
-  std::vector<Projectile> enemyProjectiles;
-  std::vector<Mine> enemyMines;
-
-  std::vector<Enemy> enemies;
-  std::vector<Explosion> explosions;
-
-  enemies.push_back(Enemy(EnemyType::BASIC_SHIELDED, sf::Vector2f(500, 500)));
-  enemies.push_back(Enemy(EnemyType::SHOOTER, sf::Vector2f(800, 200)));
-  enemies.push_back(Enemy(EnemyType::MINER, sf::Vector2f(1200, -200)));
+  std::vector<std::unique_ptr<GameObject>> gameObjects;
 
   //////////////////////////////Mapy lokalne
   LocalMap stacjaMap;
@@ -308,6 +311,7 @@ int main() {
 
     notificationText.update(dt);
 
+    //update fizyki
     if (activeState == state::STATEK) {
       playerShip.update(dt, mouseWorldPosition, (mapMode || upgradeMode || fractionsMode || inventoryMode) ? state::ANIMACJA : activeState);
       camera.setCenter(playerShip.getPosition());
@@ -315,19 +319,19 @@ int main() {
       if (!mapMode && !upgradeMode && !fractionsMode && !inventoryMode) {
           ambushTimer -= dt;
           if (ambushTimer <= 0.f) {
-              if ((rand() % 100) < 30) { // 50% na pojawienie sie
+              if ((rand() % 100) < 30) {
                   int totalTrust = 0;
                   for (const auto& f : fractions) {
                       totalTrust += f.getTrustLevel();
                   }
-                  
-                  // Bazowo 4 piratow, dodatkowy za kazde 40 punktow zaufania we wszystkich frakcjach lacznie
-                  int numPirates = 3 + (totalTrust / 40);
-                  
+
+                  // Bazowo 1 piratow, dodatkowy za kazde 40 punktow zaufania we wszystkich frakcjach lacznie
+                  int numPirates = 1 + (totalTrust / 40);
+
                   for (int p = 0; p < numPirates; ++p) {
                       float angle = (rand() % 360) * M_PI / 180.f;
                       sf::Vector2f pos = playerShip.getPosition() + sf::Vector2f(cos(angle) * 850.f, sin(angle) * 850.f);
-                      enemies.push_back(Enemy(EnemyType::CHASER, pos));
+                      gameObjects.push_back(std::make_unique<Enemy>(EnemyType::CHASER, pos));
                   }
                   notificationText.addText("UWAGA! ZASADZKA PIRATOW!", sf::Color::Red, 1.0f);
                   ambushTimer = 30.f;
@@ -356,6 +360,7 @@ int main() {
     mousePosition = sf::Mouse::getPosition(window);
     mouseWorldPosition = window.mapPixelToCoords(mousePosition);
 
+    //obsluga tla i kamery - ruch
     sf::Vector2f cameraCenter = camera.getCenter();
     background.setPosition(cameraCenter);
 
@@ -370,6 +375,7 @@ int main() {
 
     sf::Event event;
 
+    // obsluga wcisnietych klawiszy
     space_clicked = false;
     bool mouse_clicked = false;
     while (window.pollEvent(event)) {
@@ -380,6 +386,7 @@ int main() {
         mouse_clicked = true;
       }
       if (event.type == sf::Event::KeyPressed) {
+            // wchodzenie / wychodzenie ze statku
         if (event.key.code == sf::Keyboard::Space) {
           if (!mapMode && !upgradeMode && !fractionsMode && !inventoryMode) {
             if (activeState == state::STATEK) {
@@ -508,6 +515,7 @@ int main() {
       }
     }
 
+    // sprawdzenie konca gry
     if ((activeState == state::STATEK || activeState == state::LUDZIK) &&
         playerShip.getCurrentHealth() <= 0) {
       activeState = state::DEATH;
@@ -533,7 +541,7 @@ int main() {
       int slot = mainMenu.update(mousePosScreen, mouse_clicked, activeState);
       if (slot > 0) {
           std::string filename = "savegame_slot" + std::to_string(slot) + ".txt";
-          bool loaded = SaveSystem::loadGame(filename, playerShip, fractions, enemies);
+          bool loaded = SaveSystem::loadGame(filename, playerShip, fractions);
           if (!loaded) {
               std::cout << "Blad wczytywania slota: " << slot << std::endl;
 
@@ -551,14 +559,8 @@ int main() {
           playerShip.createShip();
           playerCharacter = player();
           playerCharacter.createPlayer();
-          enemies.clear();
-          enemies.push_back(
-              Enemy(EnemyType::BASIC_SHIELDED, sf::Vector2f(500, 500)));
-          enemies.push_back(Enemy(EnemyType::SHOOTER, sf::Vector2f(800, 200)));
-          enemies.push_back(Enemy(EnemyType::MINER, sf::Vector2f(1200, -200)));
-          enemyProjectiles.clear();
-          enemyMines.clear();
-          explosions.clear();
+        gameObjects.clear();
+          pendingObjects.clear();
           aktywneWnetrzeID = -1;
           mapMode = false;
           upgradeMode = false;
@@ -579,6 +581,7 @@ int main() {
       }
     }
 
+    // aktualizacja paskow
     healthBar.update(dt, playerShip.getCurrentHealth(),
                      playerShip.getMaxHealth());
     nitroBar.update(dt, playerShip.getCurrentNitro(), playerShip.getMaxNitro(),
@@ -604,7 +607,7 @@ int main() {
         int slot = saveMenu.update(mousePosScreen, mouse_clicked);
         if (slot > 0) {
             std::string filename = "savegame_slot" + std::to_string(slot) + ".txt";
-            SaveSystem::saveGame(filename, playerShip, fractions, enemies);
+            SaveSystem::saveGame(filename, playerShip, fractions);
             saveMode = false; // zamknij po zapisaniu
         }
     }
@@ -618,10 +621,10 @@ int main() {
           currentHoveredID = i;
       }
     }
-    
+
     float distToStation = sqrt(pow((prawdziwySrodek.x - playerShip.getPosition().x), 2) + pow((prawdziwySrodek.y - playerShip.getPosition().y), 2));
     if (distToStation < 85.f) currentHoveredID = -1;
-    
+
     if (questSystem.isAsteroidSpawned && sqrt(pow(questSystem.asteroidShape.getPosition().x - playerShip.getPosition().x, 2) + pow(questSystem.asteroidShape.getPosition().y - playerShip.getPosition().y, 2)) < 85.f) {
         currentHoveredID = -2;
     }
@@ -636,7 +639,7 @@ int main() {
             else if (currentHoveredID == -2) nameStr = "Zbadana Asteroida";
             else if (currentHoveredID == -3) nameStr = "Zbadany Wrak";
             else if (currentHoveredID >= 0) nameStr = fractions[currentHoveredID].getName();
-            
+
             if (currentHoveredID == -3) {
                 notificationText.addText("Wcisnij [SPACJA] aby zbadac wrak", sf::Color::Yellow, 0.5f);
             } else {
@@ -647,6 +650,7 @@ int main() {
     }
 
 
+    // odbijanie gracza od stacji
     sf::Vector2f shipPos = playerShip.getPosition();
     sf::Vector2f diff = shipPos - station_center;
     float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
@@ -679,101 +683,68 @@ int main() {
       }
     }
 
+    for (auto& obj : gameObjects) {
+        obj->update(dt, playerShip.getPosition());
+    }
+
     for (auto &proj : playerShip.projectiles) {
-      if (!proj.active)
-        continue;
-      for (auto &enemy : enemies) {
-        if (!enemy.active)
-          continue;
-        if (proj.shape.getGlobalBounds().intersects(
-                enemy.shape.getGlobalBounds())) {
-          if (enemy.takeDamage(proj.damage)) {
-            explosions.push_back(Explosion(enemy.shape.getPosition()));
-          }
-          proj.active = false;
-          break;
-        }
-      }
-    }
+        if (!proj.active) continue;
 
-    for (auto &m : playerShip.mines) {
-      if (m.exploded && m.explosionLinger == 0.5f) {
-        for (auto &enemy : enemies) {
-          if (!enemy.active)
-            continue;
+        for (auto &obj : gameObjects) {
 
-          sf::Vector2f diff = enemy.shape.getPosition() - m.shape.getPosition();
-          float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
-          if (dist <= m.blastRadius + 20.f) {
-            if (enemy.takeDamage(m.damage)) {
-              explosions.push_back(Explosion(enemy.shape.getPosition()));
+            if (Enemy* enemy = dynamic_cast<Enemy*>(obj.get())) {
+                if (proj.shape.getGlobalBounds().intersects(enemy->getBounds())) {
+                    if (enemy->takeDamage(proj.damage)) {
+                        pendingObjects.push_back(std::make_unique<Explosion>(enemy->getPosition()));
+                    }
+                    proj.active = false;
+                    break;
+                }
             }
-          }
-        }
-      }
-    }
-
-    for (auto &enemy : enemies) {
-        if (enemy.hp <= 0 && enemy.isQuestTarget) {
-            questSystem.registerKill();
-            enemy.isQuestTarget = false;
         }
     }
 
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-                                 [](const Enemy &e) { return !e.active; }),
-                  enemies.end());
+    for (auto &obj : gameObjects) {
+        if (!obj->active) continue;
 
-    if (activeState == state::STATEK) {
-      for (auto &enemy : enemies) {
-        enemy.update(dt, playerShip.getPosition(), enemyProjectiles, enemyMines);
-      }
-
-      for (auto &p : enemyProjectiles)
-        p.update(dt);
-      enemyProjectiles.erase(
-          std::remove_if(enemyProjectiles.begin(), enemyProjectiles.end(),
-                         [](const Projectile &p) { return !p.active; }),
-          enemyProjectiles.end());
-
-      for (auto &ex : explosions)
-        ex.update(dt);
-      explosions.erase(
-          std::remove_if(explosions.begin(), explosions.end(),
-                         [](const Explosion &ex) { return !ex.active; }),
-          explosions.end());
-
-      for (auto &m : enemyMines)
-        m.update(dt);
-      enemyMines.erase(std::remove_if(enemyMines.begin(), enemyMines.end(),
-                                      [](const Mine &m) { return !m.active; }),
-                       enemyMines.end());
-    }
-
-    for (auto &proj : enemyProjectiles) {
-      if (!proj.active)
-        continue;
-      if (proj.shape.getGlobalBounds().intersects(
-              playerShip.sprite.getGlobalBounds())) {
-        if (playerShip.takeDamage(proj.damage)) {
-          explosions.push_back(Explosion(playerShip.getPosition()));
+        if (Projectile* p = dynamic_cast<Projectile*>(obj.get())) {
+            if (p->getBounds().intersects(playerShip.sprite.getGlobalBounds())) {
+                if (playerShip.takeDamage(p->damage)) {
+                    pendingObjects.push_back(std::make_unique<Explosion>(playerShip.getPosition()));
+                }
+                p->active = false;
+            }
         }
-        proj.active = false;
-      }
-    }
-
-    for (auto &m : enemyMines) {
-      if (m.exploded && m.explosionLinger == 0.5f) {
-        sf::Vector2f diff = playerShip.getPosition() - m.shape.getPosition();
-        float dist = sqrt(diff.x * diff.x + diff.y * diff.y);
-        if (dist <= m.blastRadius + 15.f) {
-          if (playerShip.takeDamage(m.damage)) {
-            explosions.push_back(Explosion(playerShip.getPosition()));
-          }
+        else if (Mine* m = dynamic_cast<Mine*>(obj.get())) {
+            if (m->exploded && m->explosionLinger == 0.5f) {
+                sf::Vector2f diff = playerShip.getPosition() - m->getPosition();
+                if (sqrt(diff.x * diff.x + diff.y * diff.y) <= m->blastRadius + 15.f) {
+                    if (playerShip.takeDamage(m->damage)) pendingObjects.push_back(std::make_unique<Explosion>(playerShip.getPosition()));
+                }
+            }
         }
-      }
+        else if (Enemy* e = dynamic_cast<Enemy*>(obj.get())) {
+            if (e->hp <= 0 && e->isQuestTarget) {
+                questSystem.registerKill();
+                e->isQuestTarget = false;
+            }
+        }
     }
 
+    for (auto& newObj : pendingObjects) {
+        gameObjects.push_back(std::move(newObj));
+    }
+    pendingObjects.clear();
+
+    gameObjects.erase(std::remove_if(gameObjects.begin(), gameObjects.end(),
+        [](const std::unique_ptr<GameObject>& obj) { return !obj->active; }),
+        gameObjects.end());
+
+
+
+
+
+        //rysowanie
     window.clear();
     window.setView(camera);
 
@@ -791,9 +762,6 @@ int main() {
 
       questSystem.drawSpaceObjects(window, playerShip.getPosition(), font, fractions);
 
-      for (auto &enemy : enemies)
-        enemy.draw(window);
-
 
       for (auto &m : playerShip.mines) {
         if (!m.exploded) window.draw(m.shape);
@@ -807,29 +775,28 @@ int main() {
         window.draw(playerShip.shieldShape);
       }
 
-      for (auto &m : enemyMines) {
-        if (!m.exploded) window.draw(m.shape);
-        else window.draw(m.blastShape);
-      }
-      for (auto &p : enemyProjectiles) window.draw(p.shape);
-
-      for (auto &ex : explosions) ex.draw(window);
+    for (auto& obj : gameObjects) {
+        obj->draw(window);
+    }
 
       questSystem.drawNavigationHUD(window, playerShip.getPosition(), font, fractions);
+      if (mapMode) {
+          questSystem.drawMapMarkers(window, font, fractions);
+      }
     }
     else if (activeState == state::LUDZIK) {
       window.clear(sf::Color(25, 27, 33));
 
       if (aktywneWnetrzeID == -1) {
         stacjaMap.draw(window);
-        stacjaMap.checkNPCInteractions(playerCharacter.sprite, window, font, questSystem, aktywneWnetrzeID, playerShip, fractions, enemies, upgradeMode);
+        stacjaMap.checkNPCInteractions(playerCharacter.sprite, window, font, questSystem, aktywneWnetrzeID, playerShip, fractions, gameObjects, upgradeMode);
       }
       else if (aktywneWnetrzeID == -2) {
         asteroidaMap.draw(window);
       }
       else {
         planetyMaps[aktywneWnetrzeID].draw(window);
-        planetyMaps[aktywneWnetrzeID].checkNPCInteractions(playerCharacter.sprite, window, font, questSystem, aktywneWnetrzeID, playerShip, fractions, enemies, upgradeMode);
+        planetyMaps[aktywneWnetrzeID].checkNPCInteractions(playerCharacter.sprite, window, font, questSystem, aktywneWnetrzeID, playerShip, fractions, gameObjects, upgradeMode);
       }
       window.draw(playerCharacter.sprite);
     }
@@ -838,10 +805,8 @@ int main() {
 
     if (activeState == state::STATEK) {
         if (mapMode) {
-            questSystem.drawMapMarkers(window, font, fractions);
             window.draw(mapBorder);
             window.draw(mapText);
-            questSystem.drawMapMarkers(window, font, fractions);
         } else {
             healthBar.draw(window);
             nitroBar.draw(window);
@@ -853,7 +818,7 @@ int main() {
             if (inventoryMode) inventoryMenu.draw(window);
             if (saveMode) saveMenu.draw(window);
             if (questMode) questMenu.draw(window);
-            
+
             window.draw(keybindsText);
         }
     }
@@ -863,7 +828,7 @@ int main() {
         if (saveMode) saveMenu.draw(window);
         if (questMode) questMenu.draw(window);
         if (upgradeMode) upgradeMenu.draw(window);
-        
+
         window.draw(keybindsText);
     }
     else if (activeState == state::MENU) {

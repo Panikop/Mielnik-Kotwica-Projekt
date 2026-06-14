@@ -14,7 +14,7 @@ UIBar::UIBar(sf::Vector2f position, sf::Vector2f size, sf::Color fillColor,
     : m_position(position), m_size(size), m_baseColor(fillColor),
       m_currentValue(0.f), m_lagValue(0.f), m_maxValue(100.f),
       m_isCritical(false), m_isOnCooldown(false), m_pulseTime(0.f) {
-  // Ustawienie tła (ciemna ramka w stylu glassmorphism)
+  // Ustawienie tła
   m_bgRect.setPosition(m_position);
   m_bgRect.setSize(m_size);
   m_bgRect.setFillColor(

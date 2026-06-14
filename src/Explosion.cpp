@@ -12,7 +12,7 @@ Explosion::Explosion(sf::Vector2f pos) {
   sprite.setScale(1.f, 1.f);
 }
 
-void Explosion::update(float dt) {
+void Explosion::update(float dt, sf::Vector2f playerPos) {
   if (!active) return;
   lifetime -= dt;
 

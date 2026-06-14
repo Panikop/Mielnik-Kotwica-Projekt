@@ -21,7 +21,7 @@ Mine::Mine(sf::Vector2f pos, float dmg, float radius) {
   blastShape.setScale(scale, scale);
 }
 
-void Mine::update(float dt) {
+void Mine::update(float dt, sf::Vector2f playerPos) {
   if (!active)
     return;
 
@@ -47,4 +47,14 @@ void Mine::update(float dt) {
     if (explosionLinger <= 0)
       active = false;
   }
+}
+
+void Mine::draw(sf::RenderWindow& window) {
+    if (!active) return;
+
+    if (!exploded) {
+        window.draw(shape);
+    } else {
+        window.draw(blastShape);
+    }
 }

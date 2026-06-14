@@ -122,7 +122,7 @@ void UIUpgradeMenu::update(Ship &ship) {
 
     bool canAfford = (currentScraps >= costs[i].x && curElec >= costs[i].y && curRare >= costs[i].z);
     if (i == 4 && ship.getCurrentHealth() >= ship.getMaxHealth()) {
-        canAfford = false; // Cannot heal if already full HP
+        canAfford = false; // nie uleczy
     }
 
     if (canAfford) {

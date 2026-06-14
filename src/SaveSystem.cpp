@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 
-bool SaveSystem::saveGame(const std::string& filename, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& enemies) {
+bool SaveSystem::saveGame(const std::string& filename, Ship& ship, std::vector<Fraction>& fractions) {
     std::ofstream out(filename);
     if (!out.is_open()) return false;
 
@@ -26,21 +26,13 @@ bool SaveSystem::saveGame(const std::string& filename, Ship& ship, std::vector<F
         out << f.getTrustLevel() << "\n"; // Zapisujemy tylko poziom zaufania (Trust)
     }
 
-    // --- ENEMIES ---
-    out << "[ENEMIES]\n";
-    out << enemies.size() << "\n";
-    for (auto& e : enemies) {
-        // e.type, pozycja X, Y, hp, shield, active
-        out << (int)e.type << " " << e.shape.getPosition().x << " " << e.shape.getPosition().y << " "
-            << e.hp << " " << e.shield << " " << e.active << "\n";
-    }
 
     out.close();
     std::cout << "Gra zostala poprawnie zapisana do: " << filename << "\n";
     return true;
 }
 
-bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& enemies) {
+bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<Fraction>& fractions) {
     std::ifstream in(filename);
     if (!in.is_open()) {
         std::cout << "Brak pliku zapisu: " << filename << "\n";
@@ -60,7 +52,7 @@ bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<F
     in >> ship.current_health >> ship.max_health >> ship.healthUpgradeLevel;
     in >> ship.current_nitro >> ship.max_nitro >> ship.nitroUpgradeLevel;
     ship.nitroRechargeRate = 1.0f + (ship.nitroUpgradeLevel * 0.5f);
-    
+
     in >> ship.current_shield >> ship.max_shield >> ship.shieldUpgradeLevel;
     ship.shieldRechargeRate = 5.0f + (ship.shieldUpgradeLevel * 2.0f);
     in >> ship.shipSpeed >> ship.speedUpgradeLevel;
@@ -84,31 +76,6 @@ bool SaveSystem::loadGame(const std::string& filename, Ship& ship, std::vector<F
         }
     }
 
-    // --- ENEMIES ---
-    in >> header; // Oczekiwane [ENEMIES]
-    if (header == "[ENEMIES]") {
-        size_t eCount;
-        in >> eCount;
-        enemies.clear();
-        for (size_t i = 0; i < eCount; ++i) {
-            int typeInt;
-            float ex, ey, ehp, eshield;
-            bool eactive;
-            in >> typeInt >> ex >> ey >> ehp >> eshield >> eactive;
-
-            EnemyType type = static_cast<EnemyType>(typeInt);
-            Enemy e(type, sf::Vector2f(ex, ey));
-            e.hp = ehp;
-            e.shield = eshield;
-            e.active = eactive;
-            if (!eactive) {
-                e.hp = 0;
-            } else {
-                e.shape.setPosition(ex, ey);
-            }
-            enemies.push_back(e);
-        }
-    }
 
     in.close();
     std::cout << "Gra zostala poprawnie wczytana z pliku: " << filename << "\n";

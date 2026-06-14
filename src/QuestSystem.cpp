@@ -1,8 +1,11 @@
 #include "../include/QuestSystem.h"
+#include "../include/Enemy.h"
+#include "../include/GameObject.h"
 #include <cstdlib>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
+
 QuestSystem::QuestSystem() {
     wreckShape.setRadius(40.f);
     wreckShape.setOrigin(40.f, 40.f);
@@ -14,6 +17,7 @@ QuestSystem::QuestSystem() {
     asteroidShape.setFillColor(sf::Color(130, 120, 110));
 }
 
+//generowanie questow dla zleceniodawcy
 void QuestSystem::generateAvailableQuests(const std::vector<Fraction>& fractions) {
     availableQuests.clear();
 
@@ -26,6 +30,7 @@ void QuestSystem::generateAvailableQuests(const std::vector<Fraction>& fractions
         q.destMapID = rand() % fractions.size();
         q.destNPC = "Gubernator";
 
+        // losowanie nagrod
         q.reward = static_cast<RewardType>(rand() % 3);
         q.rewardAmt = 50 + (rand() % 100);
         q.repReward = 5 + (rand() % 10);
@@ -35,6 +40,7 @@ void QuestSystem::generateAvailableQuests(const std::vector<Fraction>& fractions
         float randX = (rand() % 4000) - 2000.f;
         float randY = (rand() % 4000) - 2000.f;
         q.targetPos = sf::Vector2f(randX, randY);
+        //strefa poszukiwania
         q.searchArea = q.targetPos + sf::Vector2f((rand()%600)-300.f, (rand()%600)-300.f);
 
         switch (q.type) {
@@ -48,7 +54,8 @@ void QuestSystem::generateAvailableQuests(const std::vector<Fraction>& fractions
     }
 }
 
-void QuestSystem::acceptQuest(int index, Ship& ship, std::vector<Enemy>& globalEnemies) {
+
+void QuestSystem::acceptQuest(int index, Ship& ship, std::vector<std::unique_ptr<GameObject>>& globalObjects) {
     if (index < 0 || index >= availableQuests.size() || currentQuest.active) return;
 
     Quest chosen = availableQuests[index];
@@ -59,7 +66,7 @@ void QuestSystem::acceptQuest(int index, Ship& ship, std::vector<Enemy>& globalE
 
     currentQuest = chosen;
     currentQuest.active = true;
-    newlyAcceptedQuestTitle = currentQuest.title;
+
 
     if (currentQuest.type == QuestType::ASTEROID) {
         isAsteroidSpawned = true;
@@ -68,15 +75,28 @@ void QuestSystem::acceptQuest(int index, Ship& ship, std::vector<Enemy>& globalE
         isWreckSpawned = true;
         wreckShape.setPosition(currentQuest.targetPos);
     } else if (currentQuest.type == QuestType::KILL) {
+        currentQuest.requiredKills = 5;
+        currentQuest.currentKills = 0;
+
         for (int i = 0; i < currentQuest.requiredKills; ++i) {
-            Enemy e(EnemyType::CHASER, currentQuest.targetPos + sf::Vector2f(i * 100.f, i * 100.f));
-            e.isQuestTarget = true;
-            globalEnemies.push_back(e);
+            EnemyType spawnType;
+
+            if (i == 0 || i == 1) spawnType = EnemyType::SHOOTER;
+            else if (i == 2 || i == 3) spawnType = EnemyType::MINER;
+            else spawnType = EnemyType::BASIC_SHIELDED;
+
+            float offsetX = (rand() % 1000) - 500.f;
+            float offsetY = (rand() % 1000) - 500.f;
+
+            auto e = std::make_unique<Enemy>(spawnType, currentQuest.targetPos + sf::Vector2f(offsetX, offsetY));
+            e->isQuestTarget = true;
+            globalObjects.push_back(std::move(e));
         }
     }
 }
 
-std::string QuestSystem::tryInteract(const std::string& npcName, int mapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<Enemy>& globalEnemies) {
+
+std::string QuestSystem::tryInteract(const std::string& npcName, int mapID, Ship& ship, std::vector<Fraction>& fractions, std::vector<std::unique_ptr<GameObject>>& globalObjects) {
     if (currentQuest.active) {
         bool isDestNPC = (npcName == currentQuest.destNPC && mapID == currentQuest.destMapID);
         bool isGiverNPC = (npcName == currentQuest.giverNPC && mapID == currentQuest.giverMapID);
@@ -128,7 +148,7 @@ sf::Vector2f QuestSystem::getCurrentTargetPos(const std::vector<Fraction>& fract
                 return fractions[currentQuest.destMapID].getLocation();
         } else {
             if (currentQuest.giverMapID == -1) {
-                return sf::Vector2f(1000.f, 356.f); // Docking area of station
+                return sf::Vector2f(1000.f, 356.f);
             } else if (currentQuest.giverMapID >= 0 && currentQuest.giverMapID < fractions.size()) {
                 return fractions[currentQuest.giverMapID].getLocation();
             }
@@ -156,7 +176,7 @@ void QuestSystem::drawNavigationHUD(sf::RenderWindow& window, const sf::Vector2f
     sf::Vector2f diff = targetPos - playerPos;
     float distance = std::sqrt(diff.x * diff.x + diff.y * diff.y);
 
-    if (distance < 500.f) return; // Hide arrow if close
+    if (distance < 500.f) return;
 
     sf::View view = window.getView();
     sf::Vector2f viewCenter = view.getCenter();
@@ -171,21 +191,19 @@ void QuestSystem::drawNavigationHUD(sf::RenderWindow& window, const sf::Vector2f
     arrow.setPoint(2, sf::Vector2f(-15.f, -15.f));
     arrow.setFillColor(sf::Color(255, 200, 0, 200));
 
-    // For rectangle bounds, limit to the shorter aspect
-    // We trace a ray to the edge of an inset rectangle
     float padding = 80.f;
     float halfW = viewSize.x / 2.f - padding;
     float halfH = viewSize.y / 2.f - padding;
 
     float edgeX, edgeY;
-    
+
     float tanAngle = std::tan(angle);
     if (std::abs(tanAngle) < halfH / halfW) {
-        // Intersects left or right edge
+
         edgeX = (diff.x > 0) ? halfW : -halfW;
         edgeY = edgeX * tanAngle;
     } else {
-        // Intersects top or bottom edge
+
         edgeY = (diff.y > 0) ? halfH : -halfH;
         edgeX = edgeY / tanAngle;
     }
@@ -199,8 +217,7 @@ void QuestSystem::drawNavigationHUD(sf::RenderWindow& window, const sf::Vector2f
     distText.setFillColor(sf::Color::Yellow);
     distText.setString(std::to_string((int)distance) + "m");
     distText.setOrigin(distText.getLocalBounds().width / 2.f, distText.getLocalBounds().height / 2.f);
-    
-    // Draw text slightly closer to center
+
     distText.setPosition(viewCenter.x + edgeX * 0.85f, viewCenter.y + edgeY * 0.85f);
 
     window.draw(arrow);

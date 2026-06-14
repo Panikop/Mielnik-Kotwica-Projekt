@@ -12,7 +12,7 @@ UIFractionsMenu::UIFractionsMenu(sf::Vector2f resolution, const sf::Font &font)
   m_position = sf::Vector2f((resolution.x - m_size.x) / 2.f,
                             (resolution.y - m_size.y) / 2.f);
 
-  // Tlo (glassmorphism style)
+  // Tlo
   m_bgRect.setPosition(m_position);
   m_bgRect.setSize(m_size);
   m_bgRect.setFillColor(sf::Color(10, 15, 20, 235));

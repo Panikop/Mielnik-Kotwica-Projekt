@@ -5,14 +5,14 @@ void Ship::createShip() {
   sprite.setTexture(Textures::shipAnimTex);
   sprite.setTextureRect(sf::IntRect(0, 0, 280, 350));
   sprite.setOrigin(140.f, 175.f);
-  sprite.setScale(0.18f, 0.18f); // 350 * 0.18 = ~63 size
+  sprite.setScale(0.18f, 0.18f);
   velocity.x = 0;
   velocity.y = 0;
 
   shieldShape.setRadius(35.f);
   shieldShape.setOrigin(35.f, 35.f);
   shieldShape.setFillColor(
-      sf::Color(50, 100, 255, 100)); // PĂłĹ‚przezroczysty niebieski
+      sf::Color(50, 100, 255, 100)); //‚przezroczysty niebieski
   shieldShape.setOutlineColor(sf::Color(50, 150, 255, 200));
   shieldShape.setOutlineThickness(2.f);
 }
@@ -40,7 +40,7 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition,
   movementMultiplier = Ship::calculateMovementMultiplier();
   sf::Vector2f movement(0, 0);
   int animFrame = 0; // 0=Idle, 1=Forward(W), 2=Backward(S), 3=Left(A), 4=Right(D)
-  
+
   if (activeState == state::STATEK) {
 
     bool flipped = false;
@@ -66,13 +66,13 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition,
       animFrame = 3; // uzyjmy klatki dla A
       flipped = true; // i odwrocmy sprite
     }
-    
+
     if (flipped) {
       sprite.setScale(-0.18f, 0.18f);
     } else {
       sprite.setScale(0.18f, 0.18f);
     }
-    
+
     sprite.setTextureRect(sf::IntRect(animFrame * 280, 0, 280, 350));
 
     // BOOST
@@ -125,7 +125,7 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition,
         current_shield = max_shield;
     }
     shieldShape.setPosition(sprite.getPosition());
-    // IntensywnoĹ›Ä‡ koloru tarczy zaleĹĽy od jej stanu
+    // Intensywnosc koloru tarczy zalezy od jej stanu
     shieldShape.setFillColor(
         sf::Color(50, 100, 255,
                   static_cast<sf::Uint8>(100 * (current_shield / max_shield))));
@@ -146,7 +146,7 @@ void Ship::update(float dt, sf::Vector2f mouseWorldPosition,
     }
   }
 
-  // Aktualizacja pociskĂłw
+  // Aktualizacja pociskow
   for (auto &p : projectiles)
     p.update(dt);
   projectiles.erase(
