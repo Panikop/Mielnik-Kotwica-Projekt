@@ -11,3 +11,6 @@ F5 - zapisz gre
 
 Cel gry:
 Wykonuj zadania od głównej stacji orbitującej w galaktyce oraz ulepszaj swój statek by galatyce zastał spokój
+
+LINK DO FILMIKU:
+https://youtu.be/9iT09_IufY8
